@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Admin - UCL Forecast{% endblock %}
+{% block content %}
+<h2 class="mb-4">Admin Panel</h2>
+
+{% if not is_admin %}
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Admin Login</div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="action" value="login">
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+
+<!-- Add Match -->
+<div class="card mb-4">
+    <div class="card-header">Add Quarterfinal Match</div>
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="action" value="add_match">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <label class="form-label">Home Team (Leg 1)</label>
+                    <input type="text" class="form-control" name="home_team" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Away Team (Leg 1)</label>
+                    <input type="text" class="form-control" name="away_team" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Leg 1 Deadline</label>
+                    <input type="datetime-local" class="form-control" name="leg1_deadline" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Leg 2 Deadline</label>
+                    <input type="datetime-local" class="form-control" name="leg2_deadline" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Add Match</button>
+        </form>
+    </div>
+</div>
+
+<!-- Existing Matches -->
+{% for m in data.matches %}
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><strong>Match {{ m.id }}:</strong> {{ m.home_team }} vs {{ m.away_team }}</span>
+        <form method="POST" class="d-inline" onsubmit="return confirm('Delete this match?')">
+            <input type="hidden" name="action" value="delete_match">
+            <input type="hidden" name="match_id" value="{{ m.id }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+        </form>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- Edit Teams & Deadlines -->
+            <div class="col-md-6">
+                <h6>Edit Match Details</h6>
+                <form method="POST">
+                    <input type="hidden" name="action" value="edit_match">
+                    <input type="hidden" name="match_id" value="{{ m.id }}">
+                    <div class="mb-2">
+                        <label class="form-label form-label-sm">Home Team</label>
+                        <input type="text" class="form-control form-control-sm" name="home_team" value="{{ m.home_team }}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label form-label-sm">Away Team</label>
+                        <input type="text" class="form-control form-control-sm" name="away_team" value="{{ m.away_team }}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label form-label-sm">Leg 1 Deadline</label>
+                        <input type="datetime-local" class="form-control form-control-sm" name="leg1_deadline" value="{{ m.leg1_deadline }}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label form-label-sm">Leg 2 Deadline</label>
+                        <input type="datetime-local" class="form-control form-control-sm" name="leg2_deadline" value="{{ m.leg2_deadline }}">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Update Details</button>
+                </form>
+            </div>
+
+            <!-- Enter Results -->
+            <div class="col-md-6">
+                <h6>Enter Results</h6>
+                <form method="POST">
+                    <input type="hidden" name="action" value="enter_results">
+                    <input type="hidden" name="match_id" value="{{ m.id }}">
+                    <div class="mb-2">
+                        <label class="form-label form-label-sm">Leg 1: {{ m.home_team }} goals</label>
+                        <input type="number" class="form-control form-control-sm" name="actual_leg1_home" min="0"
+                               value="{{ m.actual_leg1_home if m.actual_leg1_home is not none else '' }}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label form-label-sm">Leg 1: {{ m.away_team }} goals</label>
+                        <input type="number" class="form-control form-control-sm" name="actual_leg1_away" min="0"
+                               value="{{ m.actual_leg1_away if m.actual_leg1_away is not none else '' }}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label form-label-sm">Leg 2: {{ m.away_team }} goals (home)</label>
+                        <input type="number" class="form-control form-control-sm" name="actual_leg2_home" min="0"
+                               value="{{ m.actual_leg2_home if m.actual_leg2_home is not none else '' }}">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label form-label-sm">Leg 2: {{ m.home_team }} goals (away)</label>
+                        <input type="number" class="form-control form-control-sm" name="actual_leg2_away" min="0"
+                               value="{{ m.actual_leg2_away if m.actual_leg2_away is not none else '' }}">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-outline-success">Save Results</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% if not data.matches %}
+<div class="alert alert-info">No matches yet. Add one above.</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

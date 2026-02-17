@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}UCL Forecast - Login{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header text-center">
+                <h3>UCL Quarterfinal Forecast</h3>
+                <small class="text-muted">Enter your username to get started</small>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username"
+                               placeholder="Enter username" required maxlength="20">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Enter</button>
+                </form>
+
+                {% if users %}
+                <hr>
+                <p class="text-muted small">Or pick an existing user:</p>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for user in users %}
+                    <form method="POST" action="{{ url_for('login') }}" class="d-inline">
+                        <input type="hidden" name="username" value="{{ user }}">
+                        <button type="submit" class="btn btn-outline-info btn-sm">{{ user }}</button>
+                    </form>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <p class="text-muted small mt-3">{{ users|length }}/6 users registered</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

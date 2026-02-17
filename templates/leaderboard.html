@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard - UCL Forecast{% endblock %}
+{% block content %}
+<h2 class="mb-4">Leaderboard</h2>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>User</th>
+                        {% for m in matches %}
+                        <th class="text-center" title="{{ m.home_team }} vs {{ m.away_team }}">
+                            {{ m.home_team[:3] }}-{{ m.away_team[:3] }}
+                        </th>
+                        {% endfor %}
+                        <th class="text-center">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><strong>{{ row.user }}</strong></td>
+                        {% for b in row.breakdown %}
+                        <td class="text-center">
+                            {% if b.points.total > 0 %}
+                            <span class="badge bg-success">{{ b.points.total }}</span>
+                            {% else %}
+                            <span class="text-muted">0</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td class="text-center"><strong class="text-info">{{ row.total }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<h5 class="mt-4">Scoring System</h5>
+<div class="card">
+    <div class="card-body">
+        <ul class="mb-0">
+            <li><strong>Exact leg score:</strong> 3 points (per leg, max 6)</li>
+            <li><strong>Correct leg outcome (win/draw):</strong> 1 point (per leg, only if exact score not matched)</li>
+            <li><strong>Correct qualifier:</strong> 2 points</li>
+            <li><strong>Max per tie:</strong> 8 points (3 + 3 + 2)</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

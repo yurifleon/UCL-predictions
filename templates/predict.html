@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Predict - {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <h3 class="mb-4">{{ match.home_team }} vs {{ match.away_team }}</h3>
+
+        <form method="POST">
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between">
+                    <span>Leg 1 ({{ match.home_team }} home)</span>
+                    {% if leg1_locked %}<span class="badge bg-secondary">Locked</span>{% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <label class="form-label">{{ match.home_team }}</label>
+                            <input type="number" class="form-control" name="leg1_home" min="0" max="20"
+                                   value="{{ prediction.leg1_home if prediction and prediction.leg1_home is not none else '' }}"
+                                   {% if leg1_locked %}disabled{% endif %}>
+                        </div>
+                        <div class="col-auto pt-4"><strong>-</strong></div>
+                        <div class="col">
+                            <label class="form-label">{{ match.away_team }}</label>
+                            <input type="number" class="form-control" name="leg1_away" min="0" max="20"
+                                   value="{{ prediction.leg1_away if prediction and prediction.leg1_away is not none else '' }}"
+                                   {% if leg1_locked %}disabled{% endif %}>
+                        </div>
+                    </div>
+                    {% if match.leg1_deadline %}
+                    <small class="text-muted mt-2 d-block">Deadline: {{ match.leg1_deadline }}</small>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between">
+                    <span>Leg 2 ({{ match.away_team }} home)</span>
+                    {% if leg2_locked %}<span class="badge bg-secondary">Locked</span>{% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <label class="form-label">{{ match.away_team }}</label>
+                            <input type="number" class="form-control" name="leg2_home" min="0" max="20"
+                                   value="{{ prediction.leg2_home if prediction and prediction.leg2_home is not none else '' }}"
+                                   {% if leg2_locked %}disabled{% endif %}>
+                        </div>
+                        <div class="col-auto pt-4"><strong>-</strong></div>
+                        <div class="col">
+                            <label class="form-label">{{ match.home_team }}</label>
+                            <input type="number" class="form-control" name="leg2_away" min="0" max="20"
+                                   value="{{ prediction.leg2_away if prediction and prediction.leg2_away is not none else '' }}"
+                                   {% if leg2_locked %}disabled{% endif %}>
+                        </div>
+                    </div>
+                    {% if match.leg2_deadline %}
+                    <small class="text-muted mt-2 d-block">Deadline: {{ match.leg2_deadline }}</small>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if not (leg1_locked and leg2_locked) %}
+            <button type="submit" class="btn btn-primary w-100">Save Prediction</button>
+            {% else %}
+            <div class="alert alert-secondary text-center">Both legs are locked. No changes allowed.</div>
+            {% endif %}
+        </form>
+
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary mt-3">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

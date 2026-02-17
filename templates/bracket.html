@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Bracket - UCL Forecast{% endblock %}
+{% block extra_css %}
+.bracket-container {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    overflow-x: auto;
+    padding: 20px 0;
+}
+.bracket-round {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    min-width: 300px;
+}
+.bracket-match {
+    background: #131838;
+    border: 1px solid #1e50a0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    position: relative;
+}
+.bracket-match .team-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+}
+.bracket-match .team-row.qualifier {
+    color: #4da3ff;
+    font-weight: 700;
+}
+.bracket-match .scores {
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #1e3a6e;
+}
+.bracket-connector {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 30px;
+}
+.bracket-semi {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    min-width: 250px;
+    gap: 120px;
+}
+.semi-slot {
+    background: #131838;
+    border: 1px solid #1e50a0;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    min-height: 60px;
+}
+{% endblock %}
+{% block content %}
+<h2 class="mb-4">Tournament Bracket</h2>
+
+<div class="bracket-container">
+    <!-- Quarterfinals -->
+    <div>
+        <h5 class="text-center mb-3">Quarterfinals</h5>
+        <div class="bracket-round">
+            {% for m in matches %}
+            <div class="bracket-match">
+                <div class="team-row {% if m.qualifier == m.home_team %}qualifier{% endif %}">
+                    <span>{{ m.home_team }}</span>
+                    {% if m.agg_home is not none %}
+                    <span>{{ m.agg_home }}</span>
+                    {% endif %}
+                </div>
+                <div class="team-row {% if m.qualifier == m.away_team %}qualifier{% endif %}">
+                    <span>{{ m.away_team }}</span>
+                    {% if m.agg_away is not none %}
+                    <span>{{ m.agg_away }}</span>
+                    {% endif %}
+                </div>
+                <div class="scores">
+                    Leg 1: {{ m.actual_leg1_home if m.actual_leg1_home is not none else '-' }} - {{ m.actual_leg1_away if m.actual_leg1_away is not none else '-' }}
+                    &nbsp;|&nbsp;
+                    Leg 2: {{ m.actual_leg2_home if m.actual_leg2_home is not none else '-' }} - {{ m.actual_leg2_away if m.actual_leg2_away is not none else '-' }}
+                </div>
+            </div>
+            {% endfor %}
+            {% for i in range(4 - matches|length) %}
+            <div class="bracket-match">
+                <div class="team-row"><span class="text-muted">TBD</span></div>
+                <div class="team-row"><span class="text-muted">TBD</span></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Semifinals -->
+    <div>
+        <h5 class="text-center mb-3">Semifinals</h5>
+        <div class="bracket-semi">
+            {% set qualifiers = matches | selectattr('qualifier') | map(attribute='qualifier') | list %}
+            <div class="semi-slot">
+                <div>{{ qualifiers[0] if qualifiers|length > 0 else 'TBD' }}</div>
+                <div class="text-muted">vs</div>
+                <div>{{ qualifiers[1] if qualifiers|length > 1 else 'TBD' }}</div>
+            </div>
+            <div class="semi-slot">
+                <div>{{ qualifiers[2] if qualifiers|length > 2 else 'TBD' }}</div>
+                <div class="text-muted">vs</div>
+                <div>{{ qualifiers[3] if qualifiers|length > 3 else 'TBD' }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
