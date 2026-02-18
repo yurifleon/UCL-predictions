@@ -1,7 +1,8 @@
 import json
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from functools import lru_cache
+from flask import Flask, render_template, request, redirect, url_for, session, flash, g
 
 app = Flask(__name__)
 app.secret_key = "ucl-forecast-secret-key-change-me"
@@ -16,6 +17,21 @@ DEFAULT_DATA = {
 }
 
 
+def get_cached_time():
+    if "now" not in g:
+        g.now = datetime.now()
+    return g.now
+
+
+@lru_cache(maxsize=1)
+def load_data_cached():
+    return load_data()
+
+
+def invalidate_cache():
+    load_data_cached.cache_clear()
+
+
 def load_data():
     if not os.path.exists(DATA_FILE):
         save_data(DEFAULT_DATA)
@@ -27,6 +43,13 @@ def load_data():
 def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=2)
+    invalidate_cache()
+
+
+def get_match_by_id(matches, match_id):
+    if not hasattr(g, "_match_cache") or g._match_cache.get("matches") is not matches:
+        g._match_cache = {"matches": matches, "lookup": {m["id"]: m for m in matches}}
+    return g._match_cache["lookup"].get(match_id)
 
 
 def compute_points(prediction, match):
@@ -147,9 +170,14 @@ def is_leg_locked(match, leg):
         return False
     try:
         deadline = datetime.fromisoformat(deadline_str)
-        return datetime.now() >= deadline
+        return get_cached_time() >= deadline
     except (ValueError, TypeError):
         return False
+
+
+@app.before_request
+def before_request():
+    get_cached_time()
 
 
 @app.route("/")
@@ -221,7 +249,7 @@ def predict(match_id):
         return redirect(url_for("home"))
 
     data = load_data()
-    match = next((m for m in data["matches"] if m["id"] == match_id), None)
+    match = get_match_by_id(data["matches"], match_id)
     if not match:
         flash("Match not found.", "danger")
         return redirect(url_for("dashboard"))
@@ -334,7 +362,7 @@ def admin():
         # Edit match
         if action == "edit_match":
             mid = int(request.form.get("match_id", 0))
-            match = next((m for m in data["matches"] if m["id"] == mid), None)
+            match = get_match_by_id(data["matches"], mid)
             if match:
                 match["home_team"] = request.form.get("home_team", match["home_team"])
                 match["away_team"] = request.form.get("away_team", match["away_team"])
@@ -347,7 +375,7 @@ def admin():
         # Enter results
         if action == "enter_results":
             mid = int(request.form.get("match_id", 0))
-            match = next((m for m in data["matches"] if m["id"] == mid), None)
+            match = get_match_by_id(data["matches"], mid)
             if match:
                 for field in ["actual_leg1_home", "actual_leg1_away", "actual_leg2_home", "actual_leg2_away"]:
                     val = request.form.get(field, "").strip()
