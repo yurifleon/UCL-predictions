@@ -23,6 +23,26 @@
 </div>
 {% else %}
 
+<!-- Manage Users -->
+<div class="card mb-4">
+    <div class="card-header">Registered Users ({{ data.users|length }}/12)</div>
+    <div class="card-body">
+        {% if data.users %}
+        <div class="d-flex flex-wrap gap-2">
+            {% for user in data.users %}
+            <form method="POST" class="d-inline" onsubmit="return confirm('Remove user {{ user }}? Their predictions will be deleted.')">
+                <input type="hidden" name="action" value="remove_user">
+                <input type="hidden" name="username_to_remove" value="{{ user }}">
+                <button type="submit" class="btn btn-outline-danger btn-sm">{{ user }} &times;</button>
+            </form>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No users registered yet.</p>
+        {% endif %}
+    </div>
+</div>
+
 <!-- Add Match -->
 <div class="card mb-4">
     <div class="card-header">Add Quarterfinal Match</div>

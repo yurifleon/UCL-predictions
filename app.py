@@ -169,8 +169,8 @@ def login():
 
     data = load_data()
     if username not in data["users"]:
-        if len(data["users"]) >= 6:
-            flash("Maximum 6 users reached. Pick an existing username.", "danger")
+        if len(data["users"]) >= 12:
+            flash("Maximum 12 users reached. Pick an existing username.", "danger")
             return redirect(url_for("home"))
         data["users"].append(username)
         data["predictions"][username] = {}
@@ -354,6 +354,20 @@ def admin():
                     match[field] = int(val) if val != "" else None
                 save_data(data)
                 flash("Results saved.", "success")
+            return redirect(url_for("admin"))
+
+        # Remove user
+        if action == "remove_user":
+            username_to_remove = request.form.get("username_to_remove", "").strip().lower()
+            if username_to_remove in data["users"]:
+                data["users"].remove(username_to_remove)
+                data["predictions"].pop(username_to_remove, None)
+                save_data(data)
+                flash(f"User '{username_to_remove}' removed.", "success")
+                if session.get("username") == username_to_remove:
+                    session.pop("username", None)
+            else:
+                flash("User not found.", "danger")
             return redirect(url_for("admin"))
 
         # Delete match
