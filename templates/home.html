@@ -1,37 +1,34 @@
 {% extends "base.html" %}
-{% block title %}UCL Forecast - Login{% endblock %}
+{% block title %}UCL Forecast - Sign In{% endblock %}
 {% block content %}
 <div class="row justify-content-center mt-5">
     <div class="col-md-6 col-lg-4">
         <div class="card">
             <div class="card-header text-center">
                 <h3>UCL Quarterfinal Forecast</h3>
-                <small class="text-muted">Enter your username to get started</small>
+                <small class="text-muted">Sign in to your account</small>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('login') }}">
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
                         <input type="text" class="form-control" id="username" name="username"
-                               placeholder="Enter username" required maxlength="20">
+                               placeholder="Enter username" required maxlength="20" autocomplete="username">
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Enter</button>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password"
+                               placeholder="Enter password" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Sign In</button>
                 </form>
-
-                {% if users %}
-                <hr>
-                <p class="text-muted small">Or pick an existing user:</p>
-                <div class="d-flex flex-wrap gap-2">
-                    {% for user in users %}
-                    <form method="POST" action="{{ url_for('login') }}" class="d-inline">
-                        <input type="hidden" name="username" value="{{ user }}">
-                        <button type="submit" class="btn btn-outline-info btn-sm">{{ user }}</button>
-                    </form>
-                    {% endfor %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('forgot_password') }}" class="text-info small">Forgot password?</a>
                 </div>
-                {% endif %}
-
-                <p class="text-muted small mt-3">{{ users|length }}/12 users registered</p>
+                <hr>
+                <div class="text-center">
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-secondary btn-sm">New here? Create an account</a>
+                </div>
             </div>
         </div>
     </div>

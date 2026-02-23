@@ -1,8 +1,12 @@
 import json
 import os
-from datetime import datetime
+import secrets
+import smtplib
+from datetime import datetime, timedelta
+from email.mime.text import MIMEText
 from functools import lru_cache
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = "ucl-forecast-secret-key-change-me"
@@ -10,7 +14,7 @@ app.secret_key = "ucl-forecast-secret-key-change-me"
 DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.json")
 
 DEFAULT_DATA = {
-    "users": [],
+    "users": {},
     "admin_password": "admin123",
     "matches": [],
     "predictions": {},
@@ -32,18 +36,76 @@ def invalidate_cache():
     load_data_cached.cache_clear()
 
 
+def migrate_data(data):
+    """Convert list-based users to dict-based. Saves file if migration needed."""
+    if isinstance(data["users"], list):
+        old_list = data["users"]
+        data["users"] = {
+            username: {
+                "email": None,
+                "password_hash": None,
+                "reset_token": None,
+                "reset_expires": None,
+            }
+            for username in old_list
+        }
+        save_data(data)
+    return data
+
+
 def load_data():
     if not os.path.exists(DATA_FILE):
         save_data(DEFAULT_DATA)
         return DEFAULT_DATA.copy()
     with open(DATA_FILE, "r") as f:
-        return json.load(f)
+        data = json.load(f)
+    data = migrate_data(data)
+    return data
 
 
 def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=2)
     invalidate_cache()
+
+
+def user_profile_complete(user_record):
+    """Returns True if the user has both password_hash and email set."""
+    if user_record is None:
+        return False
+    return (
+        user_record.get("password_hash") is not None
+        and user_record.get("email") is not None
+    )
+
+
+def send_reset_email(to_address, reset_url):
+    """Send password reset email. Returns False silently if SMTP not configured."""
+    smtp_user = os.environ.get("SMTP_USER")
+    smtp_pass = os.environ.get("SMTP_PASS")
+    if not smtp_user or not smtp_pass:
+        return False
+    smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+    smtp_from = os.environ.get("SMTP_FROM", smtp_user)
+
+    msg = MIMEText(
+        f"Hello,\n\nClick the link below to reset your UCL Forecast password:\n\n"
+        f"{reset_url}\n\n"
+        "This link expires in 1 hour. If you did not request a reset, ignore this email."
+    )
+    msg["Subject"] = "UCL Forecast — Password Reset"
+    msg["From"] = smtp_from
+    msg["To"] = to_address
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_from, [to_address], msg.as_string())
+    except Exception:
+        return False
+    return True
 
 
 def get_match_by_id(matches, match_id):
@@ -147,7 +209,7 @@ def get_qualifier(match):
 
 def build_leaderboard(data):
     rows = []
-    for user in data["users"]:
+    for user in data["users"].keys():
         user_preds = data["predictions"].get(user, {})
         total = 0
         breakdown = []
@@ -184,29 +246,208 @@ def before_request():
 def home():
     if session.get("username"):
         return redirect(url_for("dashboard"))
-    data = load_data()
-    return render_template("home.html", users=data["users"])
+    return render_template("home.html")
 
 
 @app.route("/login", methods=["POST"])
 def login():
     username = request.form.get("username", "").strip().lower()
+    password = request.form.get("password", "")
     if not username:
         flash("Please enter a username.", "danger")
         return redirect(url_for("home"))
 
     data = load_data()
-    if username not in data["users"]:
-        if len(data["users"]) >= 12:
-            flash("Maximum 12 users reached. Pick an existing username.", "danger")
-            return redirect(url_for("home"))
-        data["users"].append(username)
-        data["predictions"][username] = {}
-        save_data(data)
+    user_record = data["users"].get(username)
+    if user_record is None:
+        flash("Invalid username or password.", "danger")
+        return redirect(url_for("home"))
+
+    if user_record.get("password_hash") is None:
+        # Migrated user with no password yet — let them in to set one
+        session["username"] = username
+        flash("Please set an email and password to continue.", "warning")
+        return redirect(url_for("complete_profile"))
+
+    if not check_password_hash(user_record["password_hash"], password):
+        flash("Invalid username or password.", "danger")
+        return redirect(url_for("home"))
 
     session["username"] = username
-    flash(f"Welcome, {username}!", "success")
+    flash(f"Welcome back, {username}!", "success")
     return redirect(url_for("dashboard"))
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if session.get("username"):
+        return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        username = request.form.get("username", "").strip().lower()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not username or not email or not password or not confirm_password:
+            flash("All fields are required.", "danger")
+            return render_template("register.html")
+
+        if len(username) > 20:
+            flash("Username must be 20 characters or fewer.", "danger")
+            return render_template("register.html")
+
+        if password != confirm_password:
+            flash("Passwords do not match.", "danger")
+            return render_template("register.html")
+
+        if len(password) < 6:
+            flash("Password must be at least 6 characters.", "danger")
+            return render_template("register.html")
+
+        data = load_data()
+
+        if username in data["users"]:
+            flash("Username already taken.", "danger")
+            return render_template("register.html")
+
+        for record in data["users"].values():
+            if record.get("email") == email:
+                flash("Email already in use.", "danger")
+                return render_template("register.html")
+
+        if len(data["users"]) >= 12:
+            flash("Maximum 12 users reached. Registration is closed.", "danger")
+            return render_template("register.html")
+
+        data["users"][username] = {
+            "email": email,
+            "password_hash": generate_password_hash(password),
+            "reset_token": None,
+            "reset_expires": None,
+        }
+        data["predictions"][username] = {}
+        save_data(data)
+        session["username"] = username
+        flash(f"Account created! Welcome, {username}!", "success")
+        return redirect(url_for("dashboard"))
+
+    return render_template("register.html")
+
+
+@app.route("/complete-profile", methods=["GET", "POST"])
+def complete_profile():
+    username = session.get("username")
+    if not username:
+        return redirect(url_for("home"))
+    data = load_data()
+    user_record = data["users"].get(username)
+    if user_record is None:
+        session.pop("username", None)
+        return redirect(url_for("home"))
+    if user_profile_complete(user_record):
+        return redirect(url_for("dashboard"))
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not email or not password or not confirm_password:
+            flash("All fields are required.", "danger")
+            return render_template("complete_profile.html")
+
+        if password != confirm_password:
+            flash("Passwords do not match.", "danger")
+            return render_template("complete_profile.html")
+
+        if len(password) < 6:
+            flash("Password must be at least 6 characters.", "danger")
+            return render_template("complete_profile.html")
+
+        for uname, record in data["users"].items():
+            if uname != username and record.get("email") == email:
+                flash("Email already in use.", "danger")
+                return render_template("complete_profile.html")
+
+        user_record["email"] = email
+        user_record["password_hash"] = generate_password_hash(password)
+        save_data(data)
+        flash("Profile complete! Welcome back.", "success")
+        return redirect(url_for("dashboard"))
+
+    return render_template("complete_profile.html")
+
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        flash("If that email is registered, a reset link has been sent.", "info")
+        data = load_data()
+        matched_username = None
+        for uname, record in data["users"].items():
+            if record.get("email") == email:
+                matched_username = uname
+                break
+        if matched_username:
+            token = secrets.token_urlsafe(32)
+            expires = (datetime.now() + timedelta(hours=1)).isoformat()
+            data["users"][matched_username]["reset_token"] = token
+            data["users"][matched_username]["reset_expires"] = expires
+            save_data(data)
+            base_url = os.environ.get("APP_BASE_URL", "http://localhost:5000")
+            reset_url = f"{base_url}/reset-password/{token}"
+            send_reset_email(email, reset_url)
+        return redirect(url_for("forgot_password"))
+    return render_template("forgot_password.html")
+
+
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    data = load_data()
+    matched_username = None
+    for uname, record in data["users"].items():
+        if record.get("reset_token") == token:
+            matched_username = uname
+            break
+
+    if matched_username is None:
+        flash("Invalid or expired link.", "danger")
+        return redirect(url_for("forgot_password"))
+
+    user_record = data["users"][matched_username]
+    expires_str = user_record.get("reset_expires")
+    if expires_str is None or datetime.fromisoformat(expires_str) < datetime.now():
+        user_record["reset_token"] = None
+        user_record["reset_expires"] = None
+        save_data(data)
+        flash("This reset link has expired. Please request a new one.", "danger")
+        return redirect(url_for("forgot_password"))
+
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not password or not confirm_password:
+            flash("Both fields are required.", "danger")
+            return render_template("reset_password.html", token=token)
+
+        if password != confirm_password:
+            flash("Passwords do not match.", "danger")
+            return render_template("reset_password.html", token=token)
+
+        if len(password) < 6:
+            flash("Password must be at least 6 characters.", "danger")
+            return render_template("reset_password.html", token=token)
+
+        user_record["password_hash"] = generate_password_hash(password)
+        user_record["reset_token"] = None
+        user_record["reset_expires"] = None
+        save_data(data)
+        flash("Password updated! Please sign in.", "success")
+        return redirect(url_for("home"))
+
+    return render_template("reset_password.html", token=token)
 
 
 @app.route("/logout")
@@ -222,6 +463,8 @@ def dashboard():
     if not username:
         return redirect(url_for("home"))
     data = load_data()
+    if not user_profile_complete(data["users"].get(username)):
+        return redirect(url_for("complete_profile"))
     user_preds = data["predictions"].get(username, {})
     matches_info = []
     for match in data["matches"]:
@@ -249,6 +492,9 @@ def predict(match_id):
         return redirect(url_for("home"))
 
     data = load_data()
+    if not user_profile_complete(data["users"].get(username)):
+        return redirect(url_for("complete_profile"))
+
     match = get_match_by_id(data["matches"], match_id)
     if not match:
         flash("Match not found.", "danger")
@@ -388,7 +634,7 @@ def admin():
         if action == "remove_user":
             username_to_remove = request.form.get("username_to_remove", "").strip().lower()
             if username_to_remove in data["users"]:
-                data["users"].remove(username_to_remove)
+                del data["users"][username_to_remove]
                 data["predictions"].pop(username_to_remove, None)
                 save_data(data)
                 flash(f"User '{username_to_remove}' removed.", "success")
