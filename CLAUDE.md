@@ -22,11 +22,24 @@ python -c "
 from app import compute_points
 match = {'actual_leg1_home': 2, 'actual_leg1_away': 1, 'actual_leg2_home': 1, 'actual_leg2_away': 2}
 pred  = {'leg1_home': 2, 'leg1_away': 1, 'leg2_home': 0, 'leg2_away': 2}
-print(compute_points(pred, match))  # expects {'leg1':3,'leg2':0,'qualifier':2,'total':5}
+print(compute_points(pred, match))  # expects {'leg1':3,'leg2':1,'qualifier':2,'total':6}
 "
+
+# Deploy to Render (branch watched by your service)
+git add .
+git commit -m "<clear change summary>"
+git push origin master
+
+# Production smoke test after deploy
+export PROD_BASE_URL="https://<your-service>.onrender.com"
+curl -i "$PROD_BASE_URL/"
+curl -i "$PROD_BASE_URL/leaderboard"
+curl -fsS "$PROD_BASE_URL/" | grep -qi "UCL"
+curl -fsS "$PROD_BASE_URL/leaderboard" | grep -qi "leaderboard"
 ```
 
 There are no tests, linting, or build steps configured.
+If Render auto-deploy is disabled, deploy manually from the Render dashboard.
 
 ## Architecture
 

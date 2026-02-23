@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="{{ current_lang }}" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,16 +29,23 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     {% if session.get('username') %}
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('leaderboard') }}">Leaderboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('bracket') }}">Bracket</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin') }}">Admin</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">{{ _('Dashboard') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('leaderboard') }}">{{ _('Leaderboard') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('bracket') }}">{{ _('Bracket') }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('admin') }}">{{ _('Admin') }}</a></li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">{{ _('Language') }}</a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item{% if current_lang == 'en' %} active{% endif %}" href="{{ url_for('set_language', lang='en', next=request.path) }}">{{ _('English') }}</a></li>
+                            <li><a class="dropdown-item{% if current_lang == 'es' %} active{% endif %}" href="{{ url_for('set_language', lang='es', next=request.path) }}">{{ _('Spanish') }}</a></li>
+                        </ul>
+                    </li>
                     {% if session.get('username') %}
                     <li class="nav-item"><span class="nav-link text-info">{{ session.username }}</span></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">{{ _('Logout') }}</a></li>
                     {% endif %}
                 </ul>
             </div>

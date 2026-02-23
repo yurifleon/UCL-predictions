@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Bracket - UCL Forecast{% endblock %}
+{% block title %}{{ _('Bracket - UCL Forecast') }}{% endblock %}
 {% block extra_css %}
 .bracket-container {
     display: flex;
@@ -61,12 +61,12 @@
 }
 {% endblock %}
 {% block content %}
-<h2 class="mb-4">Tournament Bracket</h2>
+<h2 class="mb-4">{{ _('Tournament Bracket') }}</h2>
 
 <div class="bracket-container">
     <!-- Quarterfinals -->
     <div>
-        <h5 class="text-center mb-3">Quarterfinals</h5>
+        <h5 class="text-center mb-3">{{ _('Quarterfinals') }}</h5>
         <div class="bracket-round">
             {% for m in matches %}
             <div class="bracket-match">
@@ -83,16 +83,16 @@
                     {% endif %}
                 </div>
                 <div class="scores">
-                    Leg 1: {{ m.actual_leg1_home if m.actual_leg1_home is not none else '-' }} - {{ m.actual_leg1_away if m.actual_leg1_away is not none else '-' }}
+                    {{ _('Leg 1:') }} {{ m.actual_leg1_home if m.actual_leg1_home is not none else '-' }} - {{ m.actual_leg1_away if m.actual_leg1_away is not none else '-' }}
                     &nbsp;|&nbsp;
-                    Leg 2: {{ m.actual_leg2_home if m.actual_leg2_home is not none else '-' }} - {{ m.actual_leg2_away if m.actual_leg2_away is not none else '-' }}
+                    {{ _('Leg 2:') }} {{ m.actual_leg2_home if m.actual_leg2_home is not none else '-' }} - {{ m.actual_leg2_away if m.actual_leg2_away is not none else '-' }}
                 </div>
             </div>
             {% endfor %}
             {% for i in range(4 - matches|length) %}
             <div class="bracket-match">
-                <div class="team-row"><span class="text-muted">TBD</span></div>
-                <div class="team-row"><span class="text-muted">TBD</span></div>
+                <div class="team-row"><span class="text-muted">{{ _('TBD') }}</span></div>
+                <div class="team-row"><span class="text-muted">{{ _('TBD') }}</span></div>
             </div>
             {% endfor %}
         </div>
@@ -100,18 +100,18 @@
 
     <!-- Semifinals -->
     <div>
-        <h5 class="text-center mb-3">Semifinals</h5>
+        <h5 class="text-center mb-3">{{ _('Semifinals') }}</h5>
         <div class="bracket-semi">
             {% set qualifiers = matches | selectattr('qualifier') | map(attribute='qualifier') | list %}
             <div class="semi-slot">
-                <div>{{ qualifiers[0] if qualifiers|length > 0 else 'TBD' }}</div>
-                <div class="text-muted">vs</div>
-                <div>{{ qualifiers[1] if qualifiers|length > 1 else 'TBD' }}</div>
+                <div>{{ qualifiers[0] if qualifiers|length > 0 else _('TBD') }}</div>
+                <div class="text-muted">{{ _('vs') }}</div>
+                <div>{{ qualifiers[1] if qualifiers|length > 1 else _('TBD') }}</div>
             </div>
             <div class="semi-slot">
-                <div>{{ qualifiers[2] if qualifiers|length > 2 else 'TBD' }}</div>
-                <div class="text-muted">vs</div>
-                <div>{{ qualifiers[3] if qualifiers|length > 3 else 'TBD' }}</div>
+                <div>{{ qualifiers[2] if qualifiers|length > 2 else _('TBD') }}</div>
+                <div class="text-muted">{{ _('vs') }}</div>
+                <div>{{ qualifiers[3] if qualifiers|length > 3 else _('TBD') }}</div>
             </div>
         </div>
     </div>

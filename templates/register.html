@@ -1,39 +1,39 @@
 {% extends "base.html" %}
-{% block title %}UCL Forecast - Register{% endblock %}
+{% block title %}{{ _('UCL Forecast - Register') }}{% endblock %}
 {% block content %}
 <div class="row justify-content-center mt-5">
     <div class="col-md-6 col-lg-4">
         <div class="card">
             <div class="card-header text-center">
-                <h3>Create Account</h3>
-                <small class="text-muted">Join the UCL Forecast game</small>
+                <h3>{{ _('Create Account') }}</h3>
+                <small class="text-muted">{{ _('Join the UCL Forecast game') }}</small>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('register') }}">
                     <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
+                        <label for="username" class="form-label">{{ _('Username') }}</label>
                         <input type="text" class="form-control" id="username" name="username"
-                               placeholder="Choose a username" required maxlength="20" autocomplete="username">
+                               placeholder="{{ _('Choose a username') }}" required maxlength="20" autocomplete="username">
                     </div>
                     <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
+                        <label for="email" class="form-label">{{ _('Email') }}</label>
                         <input type="email" class="form-control" id="email" name="email"
                                placeholder="you@example.com" required autocomplete="email">
                     </div>
                     <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
+                        <label for="password" class="form-label">{{ _('Password') }}</label>
                         <input type="password" class="form-control" id="password" name="password"
-                               placeholder="At least 6 characters" required autocomplete="new-password">
+                               placeholder="{{ _('At least 6 characters') }}" required autocomplete="new-password">
                     </div>
                     <div class="mb-3">
-                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                        <label for="confirm_password" class="form-label">{{ _('Confirm Password') }}</label>
                         <input type="password" class="form-control" id="confirm_password" name="confirm_password"
-                               placeholder="Repeat password" required autocomplete="new-password">
+                               placeholder="{{ _('Repeat password') }}" required autocomplete="new-password">
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Create Account</button>
+                    <button type="submit" class="btn btn-primary w-100">{{ _('Create Account') }}</button>
                 </form>
                 <div class="text-center mt-3">
-                    <a href="{{ url_for('home') }}" class="text-info small">Already have an account? Sign in</a>
+                    <a href="{{ url_for('home') }}" class="text-info small">{{ _('Already have an account? Sign in') }}</a>
                 </div>
             </div>
         </div>

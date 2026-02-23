@@ -59,6 +59,39 @@ curl -i http://localhost:5000/
 curl -i http://localhost:5000/leaderboard
 ```
 
+## Deployment (Render.com)
+This repo includes a `Procfile` (`web: python app.py`) and is intended to auto-deploy from GitHub.
+
+```bash
+# 1) Commit local changes
+git add .
+git commit -m "<clear change summary>"
+
+# 2) Push to branch tracked by your Render service (commonly master)
+git push origin master
+```
+
+If auto-deploy is disabled, trigger deploy in Render Dashboard:
+- Service -> **Manual Deploy** -> **Deploy latest commit**.
+
+## Production Smoke Test (Render)
+After deploy completes, run lightweight checks against the Render URL.
+
+```bash
+# Replace with your real Render service URL
+export PROD_BASE_URL="https://<your-service>.onrender.com"
+
+# Expect HTTP 200
+curl -i "$PROD_BASE_URL/"
+curl -i "$PROD_BASE_URL/leaderboard"
+
+# Optional content checks (non-empty HTML with app markers)
+curl -fsS "$PROD_BASE_URL/" | grep -qi "UCL"
+curl -fsS "$PROD_BASE_URL/leaderboard" | grep -qi "leaderboard"
+```
+
+Render free instances can cold-start; allow 30-60s and retry before treating as failure.
+
 ## Key Files
 - `app.py`: routes, auth, scoring, admin actions, persistence.
 - `templates/base.html`: shared layout and CSS.

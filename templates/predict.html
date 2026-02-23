@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Predict - {{ match.home_team }} vs {{ match.away_team }}{% endblock %}
+{% block title %}{{ _('Predict - {home} vs {away}', home=match.home_team, away=match.away_team) }}{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
@@ -8,8 +8,8 @@
         <form method="POST">
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between">
-                    <span>Leg 1 ({{ match.home_team }} home)</span>
-                    {% if leg1_locked %}<span class="badge bg-secondary">Locked</span>{% endif %}
+                    <span>{{ _('Leg 1 ({team} home)', team=match.home_team) }}</span>
+                    {% if leg1_locked %}<span class="badge bg-secondary">{{ _('Locked') }}</span>{% endif %}
                 </div>
                 <div class="card-body">
                     <div class="row align-items-center">
@@ -28,15 +28,15 @@
                         </div>
                     </div>
                     {% if match.leg1_deadline %}
-                    <small class="text-muted mt-2 d-block">Deadline: {{ match.leg1_deadline }}</small>
+                    <small class="text-muted mt-2 d-block">{{ _('Deadline:') }} {{ match.leg1_deadline }}</small>
                     {% endif %}
                 </div>
             </div>
 
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between">
-                    <span>Leg 2 ({{ match.away_team }} home)</span>
-                    {% if leg2_locked %}<span class="badge bg-secondary">Locked</span>{% endif %}
+                    <span>{{ _('Leg 2 ({team} home)', team=match.away_team) }}</span>
+                    {% if leg2_locked %}<span class="badge bg-secondary">{{ _('Locked') }}</span>{% endif %}
                 </div>
                 <div class="card-body">
                     <div class="row align-items-center">
@@ -55,19 +55,19 @@
                         </div>
                     </div>
                     {% if match.leg2_deadline %}
-                    <small class="text-muted mt-2 d-block">Deadline: {{ match.leg2_deadline }}</small>
+                    <small class="text-muted mt-2 d-block">{{ _('Deadline:') }} {{ match.leg2_deadline }}</small>
                     {% endif %}
                 </div>
             </div>
 
             {% if not (leg1_locked and leg2_locked) %}
-            <button type="submit" class="btn btn-primary w-100">Save Prediction</button>
+            <button type="submit" class="btn btn-primary w-100">{{ _('Save Prediction') }}</button>
             {% else %}
-            <div class="alert alert-secondary text-center">Both legs are locked. No changes allowed.</div>
+            <div class="alert alert-secondary text-center">{{ _('Both legs are locked. No changes allowed.') }}</div>
             {% endif %}
         </form>
 
-        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary mt-3">Back to Dashboard</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary mt-3">{{ _('Back to Dashboard') }}</a>
     </div>
 </div>
 {% endblock %}

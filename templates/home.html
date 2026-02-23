@@ -1,33 +1,33 @@
 {% extends "base.html" %}
-{% block title %}UCL Forecast - Sign In{% endblock %}
+{% block title %}{{ _('UCL Forecast - Sign In') }}{% endblock %}
 {% block content %}
 <div class="row justify-content-center mt-5">
     <div class="col-md-6 col-lg-4">
         <div class="card">
             <div class="card-header text-center">
-                <h3>UCL Quarterfinal Forecast</h3>
-                <small class="text-muted">Sign in to your account</small>
+                <h3>{{ _('UCL Quarterfinal Forecast') }}</h3>
+                <small class="text-muted">{{ _('Sign in to your account') }}</small>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('login') }}">
                     <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
+                        <label for="username" class="form-label">{{ _('Username') }}</label>
                         <input type="text" class="form-control" id="username" name="username"
-                               placeholder="Enter username" required maxlength="20" autocomplete="username">
+                               placeholder="{{ _('Enter username') }}" required maxlength="20" autocomplete="username">
                     </div>
                     <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
+                        <label for="password" class="form-label">{{ _('Password') }}</label>
                         <input type="password" class="form-control" id="password" name="password"
-                               placeholder="Enter password" required autocomplete="current-password">
+                               placeholder="{{ _('Enter password') }}" required autocomplete="current-password">
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Sign In</button>
+                    <button type="submit" class="btn btn-primary w-100">{{ _('Sign In') }}</button>
                 </form>
                 <div class="text-center mt-3">
-                    <a href="{{ url_for('forgot_password') }}" class="text-info small">Forgot password?</a>
+                    <a href="{{ url_for('forgot_password') }}" class="text-info small">{{ _('Forgot password?') }}</a>
                 </div>
                 <hr>
                 <div class="text-center">
-                    <a href="{{ url_for('register') }}" class="btn btn-outline-secondary btn-sm">New here? Create an account</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-secondary btn-sm">{{ _('New here? Create an account') }}</a>
                 </div>
             </div>
         </div>

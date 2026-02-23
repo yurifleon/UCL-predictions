@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Dashboard - UCL Forecast{% endblock %}
+{% block title %}{{ _('Dashboard - UCL Forecast') }}{% endblock %}
 {% block content %}
-<h2 class="mb-4">Dashboard</h2>
+<h2 class="mb-4">{{ _('Dashboard') }}</h2>
 
 <div class="row">
     <div class="col-lg-8">
-        <h5>Quarterfinal Matches</h5>
+        <h5>{{ _('Quarterfinal Matches') }}</h5>
         {% if not matches_info %}
-        <div class="alert alert-info">No matches configured yet. Ask the admin to set them up.</div>
+        <div class="alert alert-info">{{ _('No matches configured yet. Ask the admin to set them up.') }}</div>
         {% endif %}
         {% for info in matches_info %}
         {% set m = info.match %}
@@ -16,62 +16,62 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><strong>{{ m.home_team }}</strong> vs <strong>{{ m.away_team }}</strong></span>
                 {% if info.fully_locked %}
-                <span class="badge bg-secondary">Locked</span>
+                <span class="badge bg-secondary">{{ _('Locked') }}</span>
                 {% else %}
-                <a href="{{ url_for('predict', match_id=m.id) }}" class="btn btn-primary btn-sm">Predict</a>
+                <a href="{{ url_for('predict', match_id=m.id) }}" class="btn btn-primary btn-sm">{{ _('Predict') }}</a>
                 {% endif %}
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <h6>Your Prediction</h6>
+                        <h6>{{ _('Your Prediction') }}</h6>
                         {% if pred %}
                         <table class="table table-sm">
                             <tr>
-                                <td>Leg 1:</td>
+                                <td>{{ _('Leg 1:') }}</td>
                                 <td>{{ m.home_team }} {{ pred.leg1_home if pred.leg1_home is not none else '?' }} - {{ pred.leg1_away if pred.leg1_away is not none else '?' }} {{ m.away_team }}</td>
                             </tr>
                             <tr>
-                                <td>Leg 2:</td>
+                                <td>{{ _('Leg 2:') }}</td>
                                 <td>{{ m.away_team }} {{ pred.leg2_home if pred.leg2_home is not none else '?' }} - {{ pred.leg2_away if pred.leg2_away is not none else '?' }} {{ m.home_team }}</td>
                             </tr>
                         </table>
                         {% else %}
-                        <p class="text-muted">No prediction yet.
+                        <p class="text-muted">{{ _('No prediction yet.') }}
                             {% if not info.fully_locked %}
-                            <a href="{{ url_for('predict', match_id=m.id) }}">Make one</a>
+                            <a href="{{ url_for('predict', match_id=m.id) }}">{{ _('Make one') }}</a>
                             {% endif %}
                         </p>
                         {% endif %}
                     </div>
                     <div class="col-md-6">
-                        <h6>Actual Results</h6>
+                        <h6>{{ _('Actual Results') }}</h6>
                         <table class="table table-sm">
                             <tr>
-                                <td>Leg 1:</td>
+                                <td>{{ _('Leg 1:') }}</td>
                                 <td>{{ m.home_team }} {{ m.actual_leg1_home if m.actual_leg1_home is not none else '-' }} - {{ m.actual_leg1_away if m.actual_leg1_away is not none else '-' }} {{ m.away_team }}</td>
                             </tr>
                             <tr>
-                                <td>Leg 2:</td>
+                                <td>{{ _('Leg 2:') }}</td>
                                 <td>{{ m.away_team }} {{ m.actual_leg2_home if m.actual_leg2_home is not none else '-' }} - {{ m.actual_leg2_away if m.actual_leg2_away is not none else '-' }} {{ m.home_team }}</td>
                             </tr>
                         </table>
                         {% if info.points.total > 0 %}
-                        <span class="badge bg-success">{{ info.points.total }} pts</span>
+                        <span class="badge bg-success">{{ info.points.total }} {{ _('pts') }}</span>
                         {% endif %}
                     </div>
                 </div>
                 {% if not info.fully_locked %}
                 <div class="mt-2">
                     {% if not info.leg1_locked %}
-                    <small class="text-warning">Leg 1 deadline: {{ m.leg1_deadline }}</small><br>
+                    <small class="text-warning">{{ _('Leg 1 deadline:') }} {{ m.leg1_deadline }}</small><br>
                     {% else %}
-                    <small class="text-muted">Leg 1: locked</small><br>
+                    <small class="text-muted">{{ _('Leg 1: locked') }}</small><br>
                     {% endif %}
                     {% if not info.leg2_locked %}
-                    <small class="text-warning">Leg 2 deadline: {{ m.leg2_deadline }}</small>
+                    <small class="text-warning">{{ _('Leg 2 deadline:') }} {{ m.leg2_deadline }}</small>
                     {% else %}
-                    <small class="text-muted">Leg 2: locked</small>
+                    <small class="text-muted">{{ _('Leg 2: locked') }}</small>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -81,11 +81,11 @@
     </div>
 
     <div class="col-lg-4">
-        <h5>Leaderboard</h5>
+        <h5>{{ _('Leaderboard') }}</h5>
         <div class="card">
             <div class="card-body p-0">
                 <table class="table table-sm mb-0">
-                    <thead><tr><th>#</th><th>User</th><th>Points</th></tr></thead>
+                    <thead><tr><th>#</th><th>{{ _('User') }}</th><th>{{ _('Points') }}</th></tr></thead>
                     <tbody>
                     {% for row in leaderboard %}
                     <tr {% if row.user == username %}class="table-active"{% endif %}>
@@ -98,7 +98,7 @@
                 </table>
             </div>
         </div>
-        <a href="{{ url_for('leaderboard') }}" class="btn btn-outline-info btn-sm mt-2">Full Leaderboard</a>
+        <a href="{{ url_for('leaderboard') }}" class="btn btn-outline-info btn-sm mt-2">{{ _('Full Leaderboard') }}</a>
     </div>
 </div>
 {% endblock %}

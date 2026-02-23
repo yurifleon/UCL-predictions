@@ -5,6 +5,8 @@ import smtplib
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from functools import lru_cache
+from urllib.parse import urlparse
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash, g
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -19,6 +21,195 @@ DEFAULT_DATA = {
     "matches": [],
     "predictions": {},
 }
+
+SUPPORTED_LANGS = {"en", "es"}
+
+SPANISH_TRANSLATIONS = {
+    "Dashboard": "Panel",
+    "Leaderboard": "Clasificacion",
+    "Bracket": "Cuadro",
+    "Admin": "Admin",
+    "Logout": "Cerrar sesion",
+    "Please enter a username.": "Por favor, introduce un nombre de usuario.",
+    "Invalid username or password.": "Usuario o contrasena invalidos.",
+    "Please set an email and password to continue.": (
+        "Configura un correo y una contrasena para continuar."
+    ),
+    "Welcome back, {username}!": "Bienvenido de nuevo, {username}!",
+    "All fields are required.": "Todos los campos son obligatorios.",
+    "Username must be 20 characters or fewer.": "El nombre de usuario debe tener 20 caracteres o menos.",
+    "Passwords do not match.": "Las contrasenas no coinciden.",
+    "Password must be at least 6 characters.": "La contrasena debe tener al menos 6 caracteres.",
+    "Username already taken.": "Ese nombre de usuario ya esta en uso.",
+    "Email already in use.": "Ese correo ya esta en uso.",
+    "Maximum 12 users reached. Registration is closed.": (
+        "Se alcanzo el maximo de 12 usuarios. El registro esta cerrado."
+    ),
+    "Account created! Welcome, {username}!": "Cuenta creada. Bienvenido, {username}!",
+    "Profile complete! Welcome back.": "Perfil completado. Bienvenido de nuevo.",
+    "If that email is registered, a reset link has been sent.": (
+        "Si ese correo esta registrado, se envio un enlace para restablecer la contrasena."
+    ),
+    "Invalid or expired link.": "Enlace invalido o caducado.",
+    "This reset link has expired. Please request a new one.": (
+        "Este enlace de restablecimiento ha caducado. Solicita uno nuevo."
+    ),
+    "Both fields are required.": "Ambos campos son obligatorios.",
+    "Password updated! Please sign in.": "Contrasena actualizada. Inicia sesion.",
+    "Match not found.": "Partido no encontrado.",
+    "Prediction saved!": "Pronostico guardado.",
+    "Admin access granted.": "Acceso de admin concedido.",
+    "Wrong password.": "Contrasena incorrecta.",
+    "Admin login required.": "Se requiere iniciar sesion como admin.",
+    "Match added.": "Partido agregado.",
+    "Match updated.": "Partido actualizado.",
+    "Results saved.": "Resultados guardados.",
+    "User '{username}' removed.": "Usuario '{username}' eliminado.",
+    "Admin created account for {username}.": "Admin creo la cuenta para {username}.",
+    "User not found.": "Usuario no encontrado.",
+    "Match deleted.": "Partido eliminado.",
+    "UCL Forecast - Sign In": "UCL Forecast - Iniciar sesion",
+    "UCL Quarterfinal Forecast": "Pronostico UCL de Cuartos de Final",
+    "Sign in to your account": "Inicia sesion en tu cuenta",
+    "Username": "Usuario",
+    "Enter username": "Introduce usuario",
+    "Password": "Contrasena",
+    "Enter password": "Introduce contrasena",
+    "Sign In": "Iniciar sesion",
+    "Forgot password?": "Olvidaste tu contrasena?",
+    "New here? Create an account": "Eres nuevo? Crea una cuenta",
+    "UCL Forecast - Register": "UCL Forecast - Registro",
+    "Create Account": "Crear cuenta",
+    "Join the UCL Forecast game": "Unete al juego UCL Forecast",
+    "Choose a username": "Elige un usuario",
+    "Email": "Correo",
+    "At least 6 characters": "Al menos 6 caracteres",
+    "Confirm Password": "Confirmar contrasena",
+    "Repeat password": "Repite la contrasena",
+    "Already have an account? Sign in": "Ya tienes cuenta? Inicia sesion",
+    "UCL Forecast - Complete Profile": "UCL Forecast - Completar perfil",
+    "Complete Your Profile": "Completa tu perfil",
+    "Your account predates passwords. Please set an email and password to continue.": (
+        "Tu cuenta es anterior al sistema de contrasenas. Configura correo y contrasena para continuar."
+    ),
+    "New Password": "Nueva contrasena",
+    "Save & Continue": "Guardar y continuar",
+    "UCL Forecast - Forgot Password": "UCL Forecast - Recuperar contrasena",
+    "Reset Password": "Restablecer contrasena",
+    "Enter your email to receive a reset link": (
+        "Introduce tu correo para recibir un enlace de restablecimiento"
+    ),
+    "Send Reset Link": "Enviar enlace de restablecimiento",
+    "Back to sign in": "Volver a iniciar sesion",
+    "UCL Forecast - Set New Password": "UCL Forecast - Nueva contrasena",
+    "Set New Password": "Establecer nueva contrasena",
+    "Update Password": "Actualizar contrasena",
+    "Dashboard - UCL Forecast": "Panel - UCL Forecast",
+    "Quarterfinal Matches": "Partidos de cuartos",
+    "No matches configured yet. Ask the admin to set them up.": (
+        "Aun no hay partidos configurados. Pide al admin que los cree."
+    ),
+    "Locked": "Cerrado",
+    "Predict": "Pronosticar",
+    "Your Prediction": "Tu pronostico",
+    "Leg 1:": "Ida:",
+    "Leg 2:": "Vuelta:",
+    "No prediction yet.": "Aun no hay pronostico.",
+    "Make one": "Haz uno",
+    "Actual Results": "Resultados reales",
+    "pts": "pts",
+    "Leg 1 deadline:": "Cierre ida:",
+    "Leg 1: locked": "Ida: cerrada",
+    "Leg 2 deadline:": "Cierre vuelta:",
+    "Leg 2: locked": "Vuelta: cerrada",
+    "User": "Usuario",
+    "Points": "Puntos",
+    "Full Leaderboard": "Clasificacion completa",
+    "Predict - {home} vs {away}": "Pronosticar - {home} vs {away}",
+    "Leg 1 ({team} home)": "Ida ({team} local)",
+    "Deadline:": "Cierre:",
+    "Leg 2 ({team} home)": "Vuelta ({team} local)",
+    "Save Prediction": "Guardar pronostico",
+    "Both legs are locked. No changes allowed.": (
+        "Las dos piernas estan cerradas. No se permiten cambios."
+    ),
+    "Back to Dashboard": "Volver al panel",
+    "Leaderboard - UCL Forecast": "Clasificacion - UCL Forecast",
+    "Rank": "Puesto",
+    "Total": "Total",
+    "Scoring System": "Sistema de puntuacion",
+    "Exact leg score:": "Marcador exacto por partido:",
+    "3 points (per leg, max 6)": "3 puntos (por partido, max 6)",
+    "Correct leg outcome (win/draw):": "Resultado correcto (victoria/empate):",
+    "1 point (per leg, only if exact score not matched)": (
+        "1 punto (por partido, solo si no aciertas marcador exacto)"
+    ),
+    "Correct qualifier:": "Clasificado correcto:",
+    "2 points": "2 puntos",
+    "Max per tie:": "Maximo por eliminatoria:",
+    "8 points (3 + 3 + 2)": "8 puntos (3 + 3 + 2)",
+    "Bracket - UCL Forecast": "Cuadro - UCL Forecast",
+    "Tournament Bracket": "Cuadro del torneo",
+    "Quarterfinals": "Cuartos de final",
+    "Semifinals": "Semifinales",
+    "TBD": "Por definir",
+    "vs": "vs",
+    "Admin - UCL Forecast": "Admin - UCL Forecast",
+    "Admin Panel": "Panel de admin",
+    "Admin Login": "Inicio de admin",
+    "Login": "Entrar",
+    "Registered Users ({count}/12)": "Usuarios registrados ({count}/12)",
+    "No users registered yet.": "Aun no hay usuarios registrados.",
+    "Create User (Admin)": "Crear usuario (admin)",
+    "Create a user with initial login password": "Crear un usuario con contrasena inicial",
+    "Temporary Password": "Contrasena temporal",
+    "Set initial password": "Define una contrasena inicial",
+    "Create User": "Crear usuario",
+    "Remove user {user}? Their predictions will be deleted.": (
+        "Eliminar usuario {user}? Sus pronosticos se borraran."
+    ),
+    "Add Quarterfinal Match": "Agregar partido de cuartos",
+    "Home Team (Leg 1)": "Equipo local (ida)",
+    "Away Team (Leg 1)": "Equipo visitante (ida)",
+    "Leg 1 Deadline": "Cierre ida",
+    "Leg 2 Deadline": "Cierre vuelta",
+    "Add Match": "Agregar partido",
+    "Match {id}:": "Partido {id}:",
+    "Delete this match?": "Eliminar este partido?",
+    "Delete": "Eliminar",
+    "Edit Match Details": "Editar datos del partido",
+    "Home Team": "Equipo local",
+    "Away Team": "Equipo visitante",
+    "Update Details": "Actualizar datos",
+    "Enter Results": "Cargar resultados",
+    "Leg 1: {team} goals": "Ida: goles de {team}",
+    "Leg 2: {team} goals (home)": "Vuelta: goles de {team} (local)",
+    "Leg 2: {team} goals (away)": "Vuelta: goles de {team} (visitante)",
+    "Save Results": "Guardar resultados",
+    "No matches yet. Add one above.": "Aun no hay partidos. Agrega uno arriba.",
+    "English": "Ingles",
+    "Spanish": "Espanol",
+    "Language": "Idioma",
+    "UCL Forecast - Password Reset": "UCL Forecast - Restablecer contrasena",
+    "Hello,\n\nClick the link below to reset your UCL Forecast password:\n\n{reset_url}\n\nThis link expires in 1 hour. If you did not request a reset, ignore this email.": (
+        "Hola,\n\nHaz clic en el siguiente enlace para restablecer tu contrasena de UCL Forecast:\n\n{reset_url}\n\n"
+        "Este enlace caduca en 1 hora. Si no solicitaste el restablecimiento, ignora este correo."
+    ),
+}
+
+
+def translate(text: str, **kwargs) -> str:
+    lang = getattr(g, "lang", session.get("lang", "en"))
+    translated = SPANISH_TRANSLATIONS.get(text, text) if lang == "es" else text
+    translated_text = str(translated)
+    return translated_text.format(**kwargs) if kwargs else translated_text
+
+
+def _is_safe_next_url(target):
+    if not target:
+        return False
+    parsed = urlparse(target)
+    return parsed.scheme == "" and parsed.netloc == ""
 
 
 def get_cached_time():
@@ -38,6 +229,7 @@ def invalidate_cache():
 
 def migrate_data(data):
     """Convert list-based users to dict-based. Saves file if migration needed."""
+    migration_needed = False
     if isinstance(data["users"], list):
         old_list = data["users"]
         data["users"] = {
@@ -46,9 +238,18 @@ def migrate_data(data):
                 "password_hash": None,
                 "reset_token": None,
                 "reset_expires": None,
+                "preferred_lang": None,
             }
             for username in old_list
         }
+        migration_needed = True
+
+    for user_record in data["users"].values():
+        if "preferred_lang" not in user_record:
+            user_record["preferred_lang"] = None
+            migration_needed = True
+
+    if migration_needed:
         save_data(data)
     return data
 
@@ -90,11 +291,14 @@ def send_reset_email(to_address, reset_url):
     smtp_from = os.environ.get("SMTP_FROM", smtp_user)
 
     msg = MIMEText(
-        f"Hello,\n\nClick the link below to reset your UCL Forecast password:\n\n"
-        f"{reset_url}\n\n"
-        "This link expires in 1 hour. If you did not request a reset, ignore this email."
+        translate(
+            "Hello,\n\nClick the link below to reset your UCL Forecast password:\n\n"
+            "{reset_url}\n\n"
+            "This link expires in 1 hour. If you did not request a reset, ignore this email.",
+            reset_url=reset_url,
+        )
     )
-    msg["Subject"] = "UCL Forecast — Password Reset"
+    msg["Subject"] = translate("UCL Forecast - Password Reset")
     msg["From"] = smtp_from
     msg["To"] = to_address
 
@@ -239,7 +443,50 @@ def is_leg_locked(match, leg):
 
 @app.before_request
 def before_request():
+    lang = None
+    username = session.get("username")
+    if username:
+        data = load_data_cached()
+        user_record = data["users"].get(username)
+        if user_record:
+            user_lang = user_record.get("preferred_lang")
+            if user_lang in SUPPORTED_LANGS:
+                lang = user_lang
+
+    if lang is None:
+        lang = session.get("lang")
+    if lang not in SUPPORTED_LANGS:
+        best = request.accept_languages.best_match(["en", "es"])
+        lang = best if best in SUPPORTED_LANGS else "en"
+
+    session["lang"] = lang
+    g.lang = lang
     get_cached_time()
+
+
+@app.context_processor
+def inject_i18n_helpers():
+    return {
+        "_": translate,
+        "current_lang": getattr(g, "lang", "en"),
+    }
+
+
+@app.route("/set-language/<lang>")
+def set_language(lang):
+    if lang in SUPPORTED_LANGS:
+        session["lang"] = lang
+        username = session.get("username")
+        if username:
+            data = load_data()
+            user_record = data["users"].get(username)
+            if user_record is not None and user_record.get("preferred_lang") != lang:
+                user_record["preferred_lang"] = lang
+                save_data(data)
+    next_url = request.args.get("next")
+    if next_url and _is_safe_next_url(next_url):
+        return redirect(next_url)
+    return redirect(url_for("home"))
 
 
 @app.route("/")
@@ -254,27 +501,33 @@ def login():
     username = request.form.get("username", "").strip().lower()
     password = request.form.get("password", "")
     if not username:
-        flash("Please enter a username.", "danger")
+        flash(translate("Please enter a username."), "danger")
         return redirect(url_for("home"))
 
     data = load_data()
     user_record = data["users"].get(username)
     if user_record is None:
-        flash("Invalid username or password.", "danger")
+        flash(translate("Invalid username or password."), "danger")
         return redirect(url_for("home"))
 
     if user_record.get("password_hash") is None:
         # Migrated user with no password yet — let them in to set one
         session["username"] = username
-        flash("Please set an email and password to continue.", "warning")
+        user_lang = user_record.get("preferred_lang")
+        if user_lang in SUPPORTED_LANGS:
+            session["lang"] = user_lang
+        flash(translate("Please set an email and password to continue."), "warning")
         return redirect(url_for("complete_profile"))
 
     if not check_password_hash(user_record["password_hash"], password):
-        flash("Invalid username or password.", "danger")
+        flash(translate("Invalid username or password."), "danger")
         return redirect(url_for("home"))
 
     session["username"] = username
-    flash(f"Welcome back, {username}!", "success")
+    user_lang = user_record.get("preferred_lang")
+    if user_lang in SUPPORTED_LANGS:
+        session["lang"] = user_lang
+    flash(translate("Welcome back, {username}!", username=username), "success")
     return redirect(url_for("dashboard"))
 
 
@@ -289,34 +542,34 @@ def register():
         confirm_password = request.form.get("confirm_password", "")
 
         if not username or not email or not password or not confirm_password:
-            flash("All fields are required.", "danger")
+            flash(translate("All fields are required."), "danger")
             return render_template("register.html")
 
         if len(username) > 20:
-            flash("Username must be 20 characters or fewer.", "danger")
+            flash(translate("Username must be 20 characters or fewer."), "danger")
             return render_template("register.html")
 
         if password != confirm_password:
-            flash("Passwords do not match.", "danger")
+            flash(translate("Passwords do not match."), "danger")
             return render_template("register.html")
 
         if len(password) < 6:
-            flash("Password must be at least 6 characters.", "danger")
+            flash(translate("Password must be at least 6 characters."), "danger")
             return render_template("register.html")
 
         data = load_data()
 
         if username in data["users"]:
-            flash("Username already taken.", "danger")
+            flash(translate("Username already taken."), "danger")
             return render_template("register.html")
 
         for record in data["users"].values():
             if record.get("email") == email:
-                flash("Email already in use.", "danger")
+                flash(translate("Email already in use."), "danger")
                 return render_template("register.html")
 
         if len(data["users"]) >= 12:
-            flash("Maximum 12 users reached. Registration is closed.", "danger")
+            flash(translate("Maximum 12 users reached. Registration is closed."), "danger")
             return render_template("register.html")
 
         data["users"][username] = {
@@ -324,11 +577,12 @@ def register():
             "password_hash": generate_password_hash(password),
             "reset_token": None,
             "reset_expires": None,
+            "preferred_lang": session.get("lang", "en"),
         }
         data["predictions"][username] = {}
         save_data(data)
         session["username"] = username
-        flash(f"Account created! Welcome, {username}!", "success")
+        flash(translate("Account created! Welcome, {username}!", username=username), "success")
         return redirect(url_for("dashboard"))
 
     return render_template("register.html")
@@ -353,26 +607,28 @@ def complete_profile():
         confirm_password = request.form.get("confirm_password", "")
 
         if not email or not password or not confirm_password:
-            flash("All fields are required.", "danger")
+            flash(translate("All fields are required."), "danger")
             return render_template("complete_profile.html")
 
         if password != confirm_password:
-            flash("Passwords do not match.", "danger")
+            flash(translate("Passwords do not match."), "danger")
             return render_template("complete_profile.html")
 
         if len(password) < 6:
-            flash("Password must be at least 6 characters.", "danger")
+            flash(translate("Password must be at least 6 characters."), "danger")
             return render_template("complete_profile.html")
 
         for uname, record in data["users"].items():
             if uname != username and record.get("email") == email:
-                flash("Email already in use.", "danger")
+                flash(translate("Email already in use."), "danger")
                 return render_template("complete_profile.html")
 
         user_record["email"] = email
         user_record["password_hash"] = generate_password_hash(password)
+        if user_record.get("preferred_lang") not in SUPPORTED_LANGS:
+            user_record["preferred_lang"] = session.get("lang", "en")
         save_data(data)
-        flash("Profile complete! Welcome back.", "success")
+        flash(translate("Profile complete! Welcome back."), "success")
         return redirect(url_for("dashboard"))
 
     return render_template("complete_profile.html")
@@ -382,7 +638,7 @@ def complete_profile():
 def forgot_password():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
-        flash("If that email is registered, a reset link has been sent.", "info")
+        flash(translate("If that email is registered, a reset link has been sent."), "info")
         data = load_data()
         matched_username = None
         for uname, record in data["users"].items():
@@ -412,7 +668,7 @@ def reset_password(token):
             break
 
     if matched_username is None:
-        flash("Invalid or expired link.", "danger")
+        flash(translate("Invalid or expired link."), "danger")
         return redirect(url_for("forgot_password"))
 
     user_record = data["users"][matched_username]
@@ -421,7 +677,7 @@ def reset_password(token):
         user_record["reset_token"] = None
         user_record["reset_expires"] = None
         save_data(data)
-        flash("This reset link has expired. Please request a new one.", "danger")
+        flash(translate("This reset link has expired. Please request a new one."), "danger")
         return redirect(url_for("forgot_password"))
 
     if request.method == "POST":
@@ -429,22 +685,22 @@ def reset_password(token):
         confirm_password = request.form.get("confirm_password", "")
 
         if not password or not confirm_password:
-            flash("Both fields are required.", "danger")
+            flash(translate("Both fields are required."), "danger")
             return render_template("reset_password.html", token=token)
 
         if password != confirm_password:
-            flash("Passwords do not match.", "danger")
+            flash(translate("Passwords do not match."), "danger")
             return render_template("reset_password.html", token=token)
 
         if len(password) < 6:
-            flash("Password must be at least 6 characters.", "danger")
+            flash(translate("Password must be at least 6 characters."), "danger")
             return render_template("reset_password.html", token=token)
 
         user_record["password_hash"] = generate_password_hash(password)
         user_record["reset_token"] = None
         user_record["reset_expires"] = None
         save_data(data)
-        flash("Password updated! Please sign in.", "success")
+        flash(translate("Password updated! Please sign in."), "success")
         return redirect(url_for("home"))
 
     return render_template("reset_password.html", token=token)
@@ -497,7 +753,7 @@ def predict(match_id):
 
     match = get_match_by_id(data["matches"], match_id)
     if not match:
-        flash("Match not found.", "danger")
+        flash(translate("Match not found."), "danger")
         return redirect(url_for("dashboard"))
 
     mid = str(match_id)
@@ -527,7 +783,7 @@ def predict(match_id):
                 pass
 
         save_data(data)
-        flash("Prediction saved!", "success")
+        flash(translate("Prediction saved!"), "success")
         return redirect(url_for("dashboard"))
 
     prediction = data["predictions"].get(username, {}).get(mid)
@@ -578,13 +834,61 @@ def admin():
             pw = request.form.get("password", "")
             if pw == data["admin_password"]:
                 session["is_admin"] = True
-                flash("Admin access granted.", "success")
+                flash(translate("Admin access granted."), "success")
             else:
-                flash("Wrong password.", "danger")
+                flash(translate("Wrong password."), "danger")
             return redirect(url_for("admin"))
 
         if not session.get("is_admin"):
-            flash("Admin login required.", "danger")
+            flash(translate("Admin login required."), "danger")
+            return redirect(url_for("admin"))
+
+        # Add user with initial password
+        if action == "add_user":
+            username = request.form.get("username", "").strip().lower()
+            email = request.form.get("email", "").strip().lower()
+            password = request.form.get("password", "")
+            confirm_password = request.form.get("confirm_password", "")
+
+            if not username or not email or not password or not confirm_password:
+                flash(translate("All fields are required."), "danger")
+                return redirect(url_for("admin"))
+
+            if len(username) > 20:
+                flash(translate("Username must be 20 characters or fewer."), "danger")
+                return redirect(url_for("admin"))
+
+            if password != confirm_password:
+                flash(translate("Passwords do not match."), "danger")
+                return redirect(url_for("admin"))
+
+            if len(password) < 6:
+                flash(translate("Password must be at least 6 characters."), "danger")
+                return redirect(url_for("admin"))
+
+            if username in data["users"]:
+                flash(translate("Username already taken."), "danger")
+                return redirect(url_for("admin"))
+
+            for record in data["users"].values():
+                if record.get("email") == email:
+                    flash(translate("Email already in use."), "danger")
+                    return redirect(url_for("admin"))
+
+            if len(data["users"]) >= 12:
+                flash(translate("Maximum 12 users reached. Registration is closed."), "danger")
+                return redirect(url_for("admin"))
+
+            data["users"][username] = {
+                "email": email,
+                "password_hash": generate_password_hash(password),
+                "reset_token": None,
+                "reset_expires": None,
+                "preferred_lang": session.get("lang", "en"),
+            }
+            data["predictions"][username] = {}
+            save_data(data)
+            flash(translate("Admin created account for {username}.", username=username), "success")
             return redirect(url_for("admin"))
 
         # Add match
@@ -602,7 +906,7 @@ def admin():
                 "actual_leg2_away": None,
             })
             save_data(data)
-            flash("Match added.", "success")
+            flash(translate("Match added."), "success")
             return redirect(url_for("admin"))
 
         # Edit match
@@ -615,7 +919,7 @@ def admin():
                 match["leg1_deadline"] = request.form.get("leg1_deadline", match["leg1_deadline"])
                 match["leg2_deadline"] = request.form.get("leg2_deadline", match["leg2_deadline"])
                 save_data(data)
-                flash("Match updated.", "success")
+                flash(translate("Match updated."), "success")
             return redirect(url_for("admin"))
 
         # Enter results
@@ -627,7 +931,7 @@ def admin():
                     val = request.form.get(field, "").strip()
                     match[field] = int(val) if val != "" else None
                 save_data(data)
-                flash("Results saved.", "success")
+                flash(translate("Results saved."), "success")
             return redirect(url_for("admin"))
 
         # Remove user
@@ -637,11 +941,11 @@ def admin():
                 del data["users"][username_to_remove]
                 data["predictions"].pop(username_to_remove, None)
                 save_data(data)
-                flash(f"User '{username_to_remove}' removed.", "success")
+                flash(translate("User '{username}' removed.", username=username_to_remove), "success")
                 if session.get("username") == username_to_remove:
                     session.pop("username", None)
             else:
-                flash("User not found.", "danger")
+                flash(translate("User not found."), "danger")
             return redirect(url_for("admin"))
 
         # Delete match
@@ -652,7 +956,7 @@ def admin():
             for user in data["predictions"]:
                 data["predictions"][user].pop(str(mid), None)
             save_data(data)
-            flash("Match deleted.", "success")
+            flash(translate("Match deleted."), "success")
             return redirect(url_for("admin"))
 
     return render_template("admin.html", data=data, is_admin=session.get("is_admin", False))
