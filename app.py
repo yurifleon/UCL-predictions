@@ -21,11 +21,10 @@ def deadline_tz_filter(iso_str):
         return ""
     try:
         dt_utc = datetime.fromisoformat(iso_str)
-        # March-April 2026: CDT = UTC-5, Lima (no DST) = UTC-5
+        # March-April 2026: CDT = UTC-5 (same as Lima)
         dt_ct = dt_utc - timedelta(hours=5)
-        dt_lim = dt_utc - timedelta(hours=5)
         fmt = "%b %d, %I:%M %p"
-        return f"{dt_ct.strftime(fmt)} CT  /  {dt_lim.strftime(fmt)} LIM"
+        return f"{dt_ct.strftime(fmt)} CT / LIM"
     except (ValueError, TypeError):
         return iso_str
 
