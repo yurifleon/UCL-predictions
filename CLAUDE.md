@@ -53,7 +53,8 @@ This is a minimal single-file Flask app (`app.py`) for a UCL Champions League qu
       "email": "alice@example.com",
       "password_hash": "pbkdf2:sha256:...",
       "reset_token": null,
-      "reset_expires": null
+      "reset_expires": null,
+      "preferred_lang": "en"
     }
   },
   "admin_password": "admin123",
@@ -66,11 +67,13 @@ This is a minimal single-file Flask app (`app.py`) for a UCL Champions League qu
 }
 ```
 
-`migrate_data(data)` runs inside `load_data()`: if `data["users"]` is a list (old format), it converts each username to a dict entry with all fields `null` and saves. This allows graceful migration — migrated users are prompted to set an email/password on their next login.
+`migrate_data(data)` runs inside `load_data()`: if `data["users"]` is a list (old format), it converts each username to a dict entry with all fields `null` and saves. It also backfills `preferred_lang: null` for any user record missing that key. Migrated users (no `password_hash`) are prompted to set an email/password on their next login.
 
 **Critical type gotcha:** Match `id` is an `int` inside `matches[]`, but predictions are keyed by `str(match["id"])`. Always use `str(match_id)` when reading/writing `data["predictions"][username]`.
 
 **Auth:** Username + password login. Self-registration at `/register` (username, email, password; still capped at 12). Password reset via SMTP email (`/forgot-password` → `/reset-password/<token>`; 1-hour token). Migrated users (no password_hash) are redirected to `/complete-profile` after login. Admin access is a separate password stored in `data.json`, gated by `session["is_admin"]`. The admin nav link is shown to all logged-in users but the panel requires the password.
+
+`app.secret_key` is hardcoded in the source (`"ucl-forecast-secret-key-change-me"`). For production, override it via an env var.
 
 **SMTP env vars (all optional; reset email silently skipped if unset):**
 | Var | Default | Purpose |
@@ -93,13 +96,15 @@ This is a minimal single-file Flask app (`app.py`) for a UCL Champions League qu
 - 2 pts — correct qualifier (aggregate tie-winner)
 - Max 8 pts per tie (two legs + qualifier)
 
-Aggregate qualifier logic: team A = leg1 home team. `agg_home = actual_leg1_home + actual_leg2_away`. On aggregate tie, the leg2 home side (team B) advances unless leg2 result is a draw, in which case team A advances. `get_qualifier(match)` returns the qualifying team name (used by `/bracket`); `build_leaderboard(data)` returns sorted rows of `{user, total, breakdown}`.
+Aggregate qualifier logic: team A = leg1 home team. `agg_home = actual_leg1_home + actual_leg2_away`. On aggregate tie, team A advances unless team B won leg 2 outright (i.e. `a2h >= a2a` → team A advances; `a2h < a2a` → team B advances). In practice, the admin enters real results so the aggregate naturally resolves; the tiebreaker is only a code-level fallback. `get_qualifier(match)` returns the qualifying team name (used by `/bracket`); `build_leaderboard(data)` returns sorted rows of `{user, total, breakdown}`.
 
 **Templates:** Jinja2 templates in `templates/`, all extending `base.html`. Bootstrap 5.3 dark theme with a UCL blue color scheme. No JS beyond Bootstrap bundle (no custom JS). All CSS lives inline in `base.html` `<style>` block. UCL blue palette: `#1e50a0` (primary), `#4da3ff` (accent), `#0a0e27` (body bg).
 
 **Deadline locking (`is_leg_locked`):** Compares `get_cached_time()` against ISO-format deadline strings stored per-match. Locked legs cannot be edited by users; admin can always enter/update results.
 
-**Admin panel (`/admin`):** Password-gated via `session["is_admin"]`. Supports: add/edit/delete matches, enter results, and remove registered users (removing a user also deletes their predictions and invalidates their session if active). All admin actions are POST with an `action` field dispatching to the relevant branch.
+**Admin panel (`/admin`):** Password-gated via `session["is_admin"]`. Supports: add/edit/delete matches, enter results, create users (`add_user` action — same fields as `/register`, bypasses the 12-user self-registration cap only in spirit; cap is still enforced), and remove registered users (removing a user also deletes their predictions and invalidates their session if active). All admin actions are POST with an `action` field dispatching to the relevant branch.
+
+**Localization:** Two languages are supported: English (`en`) and Spanish (`es`), stored in `SUPPORTED_LANGS`. All user-facing strings pass through `translate(text, **kwargs)`, which looks up `SPANISH_TRANSLATIONS` when `g.lang == "es"`. The `_` shorthand is injected into every Jinja2 template via `inject_i18n_helpers`. Language resolution order (highest priority first): user's `preferred_lang` DB field → `session["lang"]` → browser `Accept-Language` header → default `"en"`. Saving a prediction at `/set-language/<lang>` also persists `preferred_lang` to the user record.
 
 **Routes summary:**
 - `/` — sign-in form (home.html)
@@ -107,6 +112,7 @@ Aggregate qualifier logic: team A = leg1 home team. `agg_home = actual_leg1_home
 - `/complete-profile` — migrated users set email + password
 - `/forgot-password` — request password reset email
 - `/reset-password/<token>` — set new password via token
+- `/set-language/<lang>` — switch UI language; persists to user record if logged in
 - `/dashboard` — per-user predictions + mini leaderboard
 - `/predict/<match_id>` — submit/edit score predictions
 - `/leaderboard` — full leaderboard with per-match breakdown
