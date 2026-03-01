@@ -17,7 +17,7 @@ DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.json"
 
 DEFAULT_DATA = {
     "users": {},
-    "admin_password": "admin123",
+    "admin_password": "Barca4ever!",
     "matches": [],
     "predictions": {},
 }
