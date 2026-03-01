@@ -28,7 +28,7 @@
                         </div>
                     </div>
                     {% if match.leg1_deadline %}
-                    <small class="text-muted mt-2 d-block">{{ _('Deadline:') }} {{ match.leg1_deadline }}</small>
+                    <small class="text-muted mt-2 d-block">{{ _('Deadline:') }} {{ match.leg1_deadline | deadline_tz }}</small>
                     {% endif %}
                 </div>
             </div>
@@ -55,7 +55,7 @@
                         </div>
                     </div>
                     {% if match.leg2_deadline %}
-                    <small class="text-muted mt-2 d-block">{{ _('Deadline:') }} {{ match.leg2_deadline }}</small>
+                    <small class="text-muted mt-2 d-block">{{ _('Deadline:') }} {{ match.leg2_deadline | deadline_tz }}</small>
                     {% endif %}
                 </div>
             </div>

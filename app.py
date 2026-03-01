@@ -13,6 +13,22 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = "ucl-forecast-secret-key-change-me"
 
+
+@app.template_filter("deadline_tz")
+def deadline_tz_filter(iso_str):
+    """Convert a UTC ISO deadline string to ET and Bogota/Lima (COT) for display."""
+    if not iso_str:
+        return ""
+    try:
+        dt_utc = datetime.fromisoformat(iso_str)
+        # March-April 2026: EDT = UTC-4, COT (Bogota/Lima, no DST) = UTC-5
+        dt_et = dt_utc - timedelta(hours=4)
+        dt_cot = dt_utc - timedelta(hours=5)
+        fmt = "%b %d, %I:%M %p"
+        return f"{dt_et.strftime(fmt)} ET  /  {dt_cot.strftime(fmt)} COL"
+    except (ValueError, TypeError):
+        return iso_str
+
 DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.json")
 
 DEFAULT_DATA = {
@@ -21,6 +37,21 @@ DEFAULT_DATA = {
     "matches": [],
     "predictions": {},
 }
+
+# Deadlines stored in UTC. March 2026: Europe on CET (UTC+1), so UCL kick-offs
+# 18:45 CET = 17:45 UTC, 21:00 CET = 20:00 UTC.
+# Display offsets: EDT = UTC-4, COT (Bogota/Lima) = UTC-5.
+# Order matches to match bracket image pairings: (1,2)→QF1, (3,4)→QF2, (5,6)→QF3, (7,8)→QF4.
+SEED_MATCHES = [
+    {"home_team": "PSG",             "away_team": "Chelsea",      "leg1_deadline": "2026-03-11T20:00:00", "leg2_deadline": "2026-03-17T20:00:00"},
+    {"home_team": "Galatasaray",     "away_team": "Liverpool",    "leg1_deadline": "2026-03-10T17:45:00", "leg2_deadline": "2026-03-18T20:00:00"},
+    {"home_team": "Real Madrid",     "away_team": "Man City",     "leg1_deadline": "2026-03-11T20:00:00", "leg2_deadline": "2026-03-17T20:00:00"},
+    {"home_team": "Atalanta",        "away_team": "Bayern Munich", "leg1_deadline": "2026-03-10T20:00:00", "leg2_deadline": "2026-03-18T20:00:00"},
+    {"home_team": "Newcastle",       "away_team": "Barcelona",    "leg1_deadline": "2026-03-10T20:00:00", "leg2_deadline": "2026-03-18T17:45:00"},
+    {"home_team": "Atletico Madrid", "away_team": "Tottenham",    "leg1_deadline": "2026-03-10T20:00:00", "leg2_deadline": "2026-03-18T20:00:00"},
+    {"home_team": "Bodo/Glimt",      "away_team": "Sporting CP",  "leg1_deadline": "2026-03-11T20:00:00", "leg2_deadline": "2026-03-17T17:45:00"},
+    {"home_team": "Bayer Leverkusen","away_team": "Arsenal",      "leg1_deadline": "2026-03-11T17:45:00", "leg2_deadline": "2026-03-17T20:00:00"},
+]
 
 SUPPORTED_LANGS = {"en", "es"}
 
@@ -251,6 +282,20 @@ def migrate_data(data):
         if "preferred_lang" not in user_record:
             user_record["preferred_lang"] = None
             migration_needed = True
+
+    if not data.get("matches"):
+        data["matches"] = [
+            {
+                "id": i + 1,
+                "actual_leg1_home": None,
+                "actual_leg1_away": None,
+                "actual_leg2_home": None,
+                "actual_leg2_away": None,
+                **m,
+            }
+            for i, m in enumerate(SEED_MATCHES)
+        ]
+        migration_needed = True
 
     if migration_needed:
         save_data(data)
