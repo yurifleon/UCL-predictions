@@ -25,7 +25,7 @@ def deadline_tz_filter(iso_str):
         dt_et = dt_utc - timedelta(hours=4)
         dt_cot = dt_utc - timedelta(hours=5)
         fmt = "%b %d, %I:%M %p"
-        return f"{dt_et.strftime(fmt)} ET  /  {dt_cot.strftime(fmt)} COL"
+        return f"{dt_et.strftime(fmt)} ET  /  {dt_cot.strftime(fmt)} LIM"
     except (ValueError, TypeError):
         return iso_str
 
