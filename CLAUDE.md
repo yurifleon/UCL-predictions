@@ -20,9 +20,9 @@ python -m py_compile app.py
 # Quick function test (e.g. scoring logic)
 python -c "
 from app import compute_points
-match = {'actual_leg1_home': 2, 'actual_leg1_away': 1, 'actual_leg2_home': 1, 'actual_leg2_away': 2}
-pred  = {'leg1_home': 2, 'leg1_away': 1, 'leg2_home': 0, 'leg2_away': 2}
-print(compute_points(pred, match))  # expects {'leg1':3,'leg2':1,'qualifier':2,'total':6}
+match = {'actual_leg1_home': 2, 'actual_leg1_away': 0, 'actual_leg2_home': 3, 'actual_leg2_away': 1}
+pred  = {'leg1_home': 2, 'leg1_away': 0, 'leg2_home': 1, 'leg2_away': 0}
+print(compute_points(pred, match))  # expects {'leg1':10,'leg2':5,'qualifier':2,'total':17}
 "
 
 # Deploy to Render (branch watched by your service)
@@ -91,10 +91,11 @@ This is a minimal single-file Flask app (`app.py`) for a UCL Champions League qu
 - `get_match_by_id()` — builds a `{id: match}` dict in `g._match_cache` on first call per request.
 
 **Scoring (`compute_points`):**
-- 3 pts — exact score for a leg
-- 1 pt — correct outcome (win/draw) for a leg
+- 10 pts — exact score for a leg
+- 7 pts — correct result + correct goal difference for a leg
+- 5 pts — correct result only for a leg
 - 2 pts — correct qualifier (aggregate tie-winner)
-- Max 8 pts per tie (two legs + qualifier)
+- Max 22 pts per tie (10 + 10 + 2)
 
 Aggregate qualifier logic: team A = leg1 home team. `agg_home = actual_leg1_home + actual_leg2_away`. On aggregate tie, team A advances unless team B won leg 2 outright (i.e. `a2h >= a2a` → team A advances; `a2h < a2a` → team B advances). In practice, the admin enters real results so the aggregate naturally resolves; the tiebreaker is only a code-level fallback. `get_qualifier(match)` returns the qualifying team name (used by `/bracket`); `build_leaderboard(data)` returns sorted rows of `{user, total, breakdown}`.
 
