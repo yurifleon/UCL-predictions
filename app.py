@@ -69,7 +69,7 @@ SPANISH_TRANSLATIONS = {
     "User not found.": "Usuario no encontrado.",
     "Match deleted.": "Partido eliminado.",
     "UCL Forecast - Sign In": "UCL Forecast - Iniciar sesion",
-    "UCL Quarterfinal Forecast": "Pronostico UCL de Cuartos de Final",
+    "UCL Round of 16 Forecast": "Pronostico UCL de Octavos de Final",
     "Sign in to your account": "Inicia sesion en tu cuenta",
     "Username": "Usuario",
     "Enter username": "Introduce usuario",
@@ -105,7 +105,7 @@ SPANISH_TRANSLATIONS = {
     "Set New Password": "Establecer nueva contrasena",
     "Update Password": "Actualizar contrasena",
     "Dashboard - UCL Forecast": "Panel - UCL Forecast",
-    "Quarterfinal Matches": "Partidos de cuartos",
+    "Round of 16 Matches": "Partidos de octavos",
     "No matches configured yet. Ask the admin to set them up.": (
         "Aun no hay partidos configurados. Pide al admin que los cree."
     ),
@@ -147,11 +147,14 @@ SPANISH_TRANSLATIONS = {
     "Correct qualifier:": "Clasificado correcto:",
     "2 points": "2 puntos",
     "Max per tie:": "Maximo por eliminatoria:",
-    "22 points (10 + 10 + 2)": "22 puntos (10 + 10 + 2)",
+    "20 points (10 + 10)": "20 puntos (10 + 10)",
     "Bracket - UCL Forecast": "Cuadro - UCL Forecast",
     "Tournament Bracket": "Cuadro del torneo",
-    "Quarterfinals": "Cuartos de final",
-    "Semifinals": "Semifinales",
+    "Round of 16": "Octavos de final",
+    "Quarter-finals": "Cuartos de final",
+    "Semi-finals": "Semifinales",
+    "Final": "Final",
+    "Champion": "Campeon",
     "TBD": "Por definir",
     "vs": "vs",
     "Admin - UCL Forecast": "Admin - UCL Forecast",
@@ -168,7 +171,7 @@ SPANISH_TRANSLATIONS = {
     "Remove user {user}? Their predictions will be deleted.": (
         "Eliminar usuario {user}? Sus pronosticos se borraran."
     ),
-    "Add Quarterfinal Match": "Agregar partido de cuartos",
+    "Add Round of 16 Match": "Agregar partido de octavos",
     "Home Team (Leg 1)": "Equipo local (ida)",
     "Away Team (Leg 1)": "Equipo visitante (ida)",
     "Leg 1 Deadline": "Cierre ida",
@@ -355,36 +358,7 @@ def compute_points(prediction, match):
                 if actual_outcome == pred_outcome:
                     points["leg2"] = 7 if (a2h - a2a) == (p2h - p2a) else 5
 
-    # Check qualifier (need both legs actual results)
-    if all(v is not None for v in [a1h, a1a, a2h, a2a]):
-        p1h = prediction.get("leg1_home")
-        p1a = prediction.get("leg1_away")
-        p2h = prediction.get("leg2_home")
-        p2a = prediction.get("leg2_away")
-        if all(v is not None for v in [p1h, p1a, p2h, p2a]):
-            # Aggregate: home team in leg1 is "team A"
-            actual_agg_home = a1h + a2a  # team A goals across both legs
-            actual_agg_away = a1a + a2h  # team B goals across both legs
-            pred_agg_home = p1h + p2a
-            pred_agg_away = p1a + p2h
-
-            if actual_agg_home != actual_agg_away:
-                actual_qualifier = "home" if actual_agg_home > actual_agg_away else "away"
-            else:
-                # Tie on aggregate — away goals rule removed in modern UCL,
-                # but we need a tiebreaker. Use home team of leg2 as qualifier
-                # (simplified: admin enters result that reflects the actual qualifier)
-                actual_qualifier = "home" if a2h >= a2a else "away"
-
-            if pred_agg_home != pred_agg_away:
-                pred_qualifier = "home" if pred_agg_home > pred_agg_away else "away"
-            else:
-                pred_qualifier = "home" if p2h >= p2a else "away"
-
-            if actual_qualifier == pred_qualifier:
-                points["qualifier"] = 2
-
-    points["total"] = points["leg1"] + points["leg2"] + points["qualifier"]
+    points["total"] = points["leg1"] + points["leg2"]
     return points
 
 

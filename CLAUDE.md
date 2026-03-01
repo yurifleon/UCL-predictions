@@ -43,7 +43,7 @@ If Render auto-deploy is disabled, deploy manually from the Render dashboard.
 
 ## Architecture
 
-This is a minimal single-file Flask app (`app.py`) for a UCL Champions League quarterfinal prediction game among friends (max 12 users).
+This is a minimal single-file Flask app (`app.py`) for a UCL Champions League Round of 16 prediction game among friends (max 12 users).
 
 **Data layer:** All state is persisted to `data.json` (gitignored) via `load_data()` / `save_data()`. No database — every request reads from a module-level `lru_cache` and writes back on mutation (which calls `invalidate_cache()`). The data structure is:
 ```json
@@ -94,16 +94,16 @@ This is a minimal single-file Flask app (`app.py`) for a UCL Champions League qu
 - 10 pts — exact score for a leg
 - 7 pts — correct result + correct goal difference for a leg
 - 5 pts — correct result only for a leg
-- 2 pts — correct qualifier (aggregate tie-winner)
-- Max 22 pts per tie (10 + 10 + 2)
+- Max 20 pts per tie (10 + 10); no qualifier bonus
+- `points["qualifier"]` is always 0 and kept only for schema compatibility
 
-Aggregate qualifier logic: team A = leg1 home team. `agg_home = actual_leg1_home + actual_leg2_away`. On aggregate tie, team A advances unless team B won leg 2 outright (i.e. `a2h >= a2a` → team A advances; `a2h < a2a` → team B advances). In practice, the admin enters real results so the aggregate naturally resolves; the tiebreaker is only a code-level fallback. `get_qualifier(match)` returns the qualifying team name (used by `/bracket`); `build_leaderboard(data)` returns sorted rows of `{user, total, breakdown}`.
+Aggregate qualifier logic (used for `/bracket` display only — no longer affects scoring): team A = leg1 home team. `agg_home = actual_leg1_home + actual_leg2_away`. On aggregate tie, team A advances unless team B won leg 2 outright (`a2h >= a2a` → team A; `a2h < a2a` → team B). `get_qualifier(match)` returns the qualifying team name. `build_leaderboard(data)` returns sorted rows of `{user, total, breakdown}`.
 
 **Templates:** Jinja2 templates in `templates/`, all extending `base.html`. Bootstrap 5.3 dark theme with a UCL blue color scheme. No JS beyond Bootstrap bundle (no custom JS). All CSS lives inline in `base.html` `<style>` block. UCL blue palette: `#1e50a0` (primary), `#4da3ff` (accent), `#0a0e27` (body bg).
 
 **Deadline locking (`is_leg_locked`):** Compares `get_cached_time()` against ISO-format deadline strings stored per-match. Locked legs cannot be edited by users; admin can always enter/update results.
 
-**Admin panel (`/admin`):** Password-gated via `session["is_admin"]`. Supports: add/edit/delete matches, enter results, create users (`add_user` action — same fields as `/register`, bypasses the 12-user self-registration cap only in spirit; cap is still enforced), and remove registered users (removing a user also deletes their predictions and invalidates their session if active). All admin actions are POST with an `action` field dispatching to the relevant branch.
+**Admin panel (`/admin`):** Password-gated via `session["is_admin"]`. Supports: add/edit/delete Round of 16 matches, enter results, create users (`add_user` action — same fields as `/register`, cap still enforced), and remove registered users (also deletes their predictions and invalidates their session). All admin actions are POST with an `action` field dispatching to the relevant branch.
 
 **Localization:** Two languages are supported: English (`en`) and Spanish (`es`), stored in `SUPPORTED_LANGS`. All user-facing strings pass through `translate(text, **kwargs)`, which looks up `SPANISH_TRANSLATIONS` when `g.lang == "es"`. The `_` shorthand is injected into every Jinja2 template via `inject_i18n_helpers`. Language resolution order (highest priority first): user's `preferred_lang` DB field → `session["lang"]` → browser `Accept-Language` header → default `"en"`. Saving a prediction at `/set-language/<lang>` also persists `preferred_lang` to the user record.
 
@@ -117,5 +117,5 @@ Aggregate qualifier logic: team A = leg1 home team. `agg_home = actual_leg1_home
 - `/dashboard` — per-user predictions + mini leaderboard
 - `/predict/<match_id>` — submit/edit score predictions
 - `/leaderboard` — full leaderboard with per-match breakdown
-- `/bracket` — aggregate results and qualifier display
+- `/bracket` — full tournament bracket: R16 results and qualifiers → QF/SF/Final (TBD slots)
 - `/admin` — admin panel (match management + user management)

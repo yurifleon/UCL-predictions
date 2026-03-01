@@ -4,92 +4,124 @@
 .bracket-container {
     display: flex;
     align-items: center;
-    gap: 40px;
+    gap: 24px;
     overflow-x: auto;
-    padding: 20px 0;
+    padding: 20px 0 30px;
 }
-.bracket-round {
+/* Round of 16 — 8 matches */
+.bracket-r16 {
     display: flex;
     flex-direction: column;
-    gap: 30px;
-    min-width: 300px;
+    gap: 12px;
+    min-width: 260px;
+}
+/* Quarter-finals — 4 slots */
+.bracket-qf {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    min-width: 200px;
+    gap: 108px;
+}
+/* Semi-finals — 2 slots */
+.bracket-sf {
+    display: flex;
+    flex-direction: column;
+    min-width: 180px;
+    gap: 296px;
+}
+/* Final — 1 slot */
+.bracket-final {
+    display: flex;
+    align-items: center;
+    min-width: 180px;
 }
 .bracket-match {
     background: #131838;
     border: 1px solid #1e50a0;
     border-radius: 8px;
-    padding: 12px 16px;
+    padding: 10px 14px;
     position: relative;
 }
 .bracket-match .team-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 4px 0;
+    padding: 3px 0;
+    font-size: 0.9rem;
 }
 .bracket-match .team-row.qualifier {
     color: #4da3ff;
     font-weight: 700;
 }
 .bracket-match .scores {
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: #aaa;
-    margin-top: 6px;
-    padding-top: 6px;
+    margin-top: 5px;
+    padding-top: 5px;
     border-top: 1px solid #1e3a6e;
 }
-.bracket-connector {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 30px;
-}
-.bracket-semi {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    min-width: 250px;
-    gap: 120px;
-}
-.semi-slot {
+.bracket-slot {
     background: #131838;
     border: 1px solid #1e50a0;
     border-radius: 8px;
-    padding: 16px;
+    padding: 12px 14px;
     text-align: center;
-    min-height: 60px;
+    min-height: 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+.bracket-slot .slot-team {
+    font-size: 0.88rem;
+}
+.bracket-slot .slot-team.known {
+    color: #4da3ff;
+    font-weight: 700;
+}
+.bracket-slot .slot-sep {
+    font-size: 0.75rem;
+    color: #666;
+}
+.bracket-champion {
+    background: linear-gradient(135deg, #1e50a0, #4da3ff);
+    border-radius: 8px;
+    padding: 16px 20px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+    min-width: 140px;
 }
 {% endblock %}
 {% block content %}
-<h2 class="mb-4">{{ _('Tournament Bracket') }}</h2>
+<h2 class="mb-1">{{ _('Tournament Bracket') }}</h2>
+<p class="text-muted mb-4">Champions League 2025-26</p>
 
 <div class="bracket-container">
-    <!-- Quarterfinals -->
+
+    <!-- Round of 16 -->
     <div>
-        <h5 class="text-center mb-3">{{ _('Quarterfinals') }}</h5>
-        <div class="bracket-round">
+        <h6 class="text-center text-muted mb-2">{{ _('Round of 16') }}</h6>
+        <div class="bracket-r16">
             {% for m in matches %}
             <div class="bracket-match">
                 <div class="team-row {% if m.qualifier == m.home_team %}qualifier{% endif %}">
                     <span>{{ m.home_team }}</span>
-                    {% if m.agg_home is not none %}
-                    <span>{{ m.agg_home }}</span>
-                    {% endif %}
+                    {% if m.agg_home is not none %}<span>{{ m.agg_home }}</span>{% endif %}
                 </div>
                 <div class="team-row {% if m.qualifier == m.away_team %}qualifier{% endif %}">
                     <span>{{ m.away_team }}</span>
-                    {% if m.agg_away is not none %}
-                    <span>{{ m.agg_away }}</span>
-                    {% endif %}
+                    {% if m.agg_away is not none %}<span>{{ m.agg_away }}</span>{% endif %}
                 </div>
                 <div class="scores">
-                    {{ _('Leg 1:') }} {{ m.actual_leg1_home if m.actual_leg1_home is not none else '-' }} - {{ m.actual_leg1_away if m.actual_leg1_away is not none else '-' }}
+                    {{ _('Leg 1:') }} {{ m.actual_leg1_home if m.actual_leg1_home is not none else '-' }} – {{ m.actual_leg1_away if m.actual_leg1_away is not none else '-' }}
                     &nbsp;|&nbsp;
-                    {{ _('Leg 2:') }} {{ m.actual_leg2_home if m.actual_leg2_home is not none else '-' }} - {{ m.actual_leg2_away if m.actual_leg2_away is not none else '-' }}
+                    {{ _('Leg 2:') }} {{ m.actual_leg2_home if m.actual_leg2_home is not none else '-' }} – {{ m.actual_leg2_away if m.actual_leg2_away is not none else '-' }}
                 </div>
             </div>
             {% endfor %}
-            {% for i in range(4 - matches|length) %}
+            {% for i in range(8 - matches|length) %}
             <div class="bracket-match">
                 <div class="team-row"><span class="text-muted">{{ _('TBD') }}</span></div>
                 <div class="team-row"><span class="text-muted">{{ _('TBD') }}</span></div>
@@ -98,22 +130,58 @@
         </div>
     </div>
 
-    <!-- Semifinals -->
+    <!-- Quarter-finals -->
     <div>
-        <h5 class="text-center mb-3">{{ _('Semifinals') }}</h5>
-        <div class="bracket-semi">
-            {% set qualifiers = matches | selectattr('qualifier') | map(attribute='qualifier') | list %}
-            <div class="semi-slot">
-                <div>{{ qualifiers[0] if qualifiers|length > 0 else _('TBD') }}</div>
-                <div class="text-muted">{{ _('vs') }}</div>
-                <div>{{ qualifiers[1] if qualifiers|length > 1 else _('TBD') }}</div>
+        <h6 class="text-center text-muted mb-2">{{ _('Quarter-finals') }}</h6>
+        <div class="bracket-qf">
+            {% for pair in range(4) %}
+            {% set i = pair * 2 %}
+            {% set m1 = matches[i] if matches|length > i else none %}
+            {% set m2 = matches[i+1] if matches|length > i+1 else none %}
+            {% set q1 = m1.qualifier if m1 and m1.qualifier else none %}
+            {% set q2 = m2.qualifier if m2 and m2.qualifier else none %}
+            <div class="bracket-slot">
+                <span class="slot-team {{ 'known' if q1 }}">{{ q1 or _('TBD') }}</span>
+                <span class="slot-sep">{{ _('vs') }}</span>
+                <span class="slot-team {{ 'known' if q2 }}">{{ q2 or _('TBD') }}</span>
             </div>
-            <div class="semi-slot">
-                <div>{{ qualifiers[2] if qualifiers|length > 2 else _('TBD') }}</div>
-                <div class="text-muted">{{ _('vs') }}</div>
-                <div>{{ qualifiers[3] if qualifiers|length > 3 else _('TBD') }}</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Semi-finals -->
+    <div>
+        <h6 class="text-center text-muted mb-2">{{ _('Semi-finals') }}</h6>
+        <div class="bracket-sf">
+            {% for sf in range(2) %}
+            <div class="bracket-slot">
+                <span class="slot-team text-muted">{{ _('TBD') }}</span>
+                <span class="slot-sep">{{ _('vs') }}</span>
+                <span class="slot-team text-muted">{{ _('TBD') }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Final -->
+    <div>
+        <h6 class="text-center text-muted mb-2">{{ _('Final') }}</h6>
+        <div class="bracket-final">
+            <div class="bracket-slot" style="min-width:160px">
+                <span class="slot-team text-muted">{{ _('TBD') }}</span>
+                <span class="slot-sep">{{ _('vs') }}</span>
+                <span class="slot-team text-muted">{{ _('TBD') }}</span>
             </div>
         </div>
     </div>
+
+    <!-- Champion -->
+    <div>
+        <h6 class="text-center text-muted mb-2">{{ _('Champion') }}</h6>
+        <div class="bracket-champion text-white">
+            🏆 {{ _('TBD') }}
+        </div>
+    </div>
+
 </div>
 {% endblock %}
