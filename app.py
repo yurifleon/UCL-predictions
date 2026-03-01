@@ -832,7 +832,8 @@ def admin():
         # Login
         if action == "login":
             pw = request.form.get("password", "")
-            if pw == data["admin_password"]:
+            effective_admin_pw = os.environ.get("ADMIN_PASSWORD") or data["admin_password"]
+            if pw == effective_admin_pw:
                 session["is_admin"] = True
                 flash(translate("Admin access granted."), "success")
             else:
