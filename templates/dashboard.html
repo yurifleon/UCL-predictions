@@ -18,7 +18,7 @@
                 {% if info.fully_locked %}
                 <span class="badge bg-secondary">{{ _('Locked') }}</span>
                 {% else %}
-                <a href="{{ url_for('predict', match_id=m.id) }}" class="btn btn-primary btn-sm">{{ _('Predict') }}</a>
+                <a href="{{ url_for('predict', match_id=m.id) }}" class="btn btn-primary btn-sm">{{ _('Update Forecast') if pred else _('Predict') }}</a>
                 {% endif %}
             </div>
             <div class="card-body">

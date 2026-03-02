@@ -142,6 +142,7 @@ SPANISH_TRANSLATIONS = {
     ),
     "Locked": "Cerrado",
     "Predict": "Pronosticar",
+    "Update Forecast": "Actualizar pronostico",
     "Your Prediction": "Tu pronostico",
     "Leg 1:": "Ida:",
     "Leg 2:": "Vuelta:",
