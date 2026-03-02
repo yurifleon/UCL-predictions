@@ -98,10 +98,10 @@ This is a minimal single-file Flask app (`app.py`) for a UCL Champions League Ro
 - `get_match_by_id()` — builds a `{id: match}` dict in `g._match_cache` on first call per request.
 
 **Scoring (`compute_points`):**
-- 10 pts — exact score for a leg
-- 7 pts — correct result + correct goal difference for a leg
-- 5 pts — correct result only for a leg
-- Max 20 pts per tie (10 + 10); no qualifier bonus
+- 6 pts — exact score for a leg
+- 4 pts — correct result + correct goal difference for a leg
+- 2 pts — correct result only for a leg
+- Max 12 pts per tie (6 + 6); no qualifier bonus
 - `points["qualifier"]` is always 0 and kept only for schema compatibility
 
 Aggregate qualifier logic (used for `/bracket` display only — no longer affects scoring): team A = leg1 home team. `agg_home = actual_leg1_home + actual_leg2_away`. On aggregate tie, team A advances unless team B won leg 2 outright (`a2h >= a2a` → team A; `a2h < a2a` → team B). `get_qualifier(match)` returns the qualifying team name. `build_leaderboard(data)` returns sorted rows of `{user, total, breakdown}`.

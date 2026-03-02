@@ -171,15 +171,13 @@ SPANISH_TRANSLATIONS = {
     "Total": "Total",
     "Scoring System": "Sistema de puntuacion",
     "Exact score:": "Marcador exacto:",
-    "10 points (per leg)": "10 puntos (por partido)",
+    "6 points (per leg)": "6 puntos (por partido)",
     "Correct result + goal difference:": "Resultado correcto + diferencia de goles:",
-    "7 points (per leg)": "7 puntos (por partido)",
+    "4 points (per leg)": "4 puntos (por partido)",
     "Correct result only:": "Solo resultado correcto:",
-    "5 points (per leg)": "5 puntos (por partido)",
-    "Correct qualifier:": "Clasificado correcto:",
-    "2 points": "2 puntos",
+    "2 points (per leg)": "2 puntos (por partido)",
     "Max per tie:": "Maximo por eliminatoria:",
-    "20 points (10 + 10)": "20 puntos (10 + 10)",
+    "12 points (6 + 6)": "12 puntos (6 + 6)",
     "Bracket - UCL Forecast": "Cuadro - UCL Forecast",
     "Tournament Bracket": "Cuadro del torneo",
     "Round of 16": "Octavos de final",
@@ -382,12 +380,12 @@ def compute_points(prediction, match):
         p1a = prediction.get("leg1_away")
         if p1h is not None and p1a is not None:
             if p1h == a1h and p1a == a1a:
-                points["leg1"] = 10
+                points["leg1"] = 6
             else:
                 actual_outcome = (a1h > a1a) - (a1h < a1a)
                 pred_outcome = (p1h > p1a) - (p1h < p1a)
                 if actual_outcome == pred_outcome:
-                    points["leg1"] = 7 if (a1h - a1a) == (p1h - p1a) else 5
+                    points["leg1"] = 4 if (a1h - a1a) == (p1h - p1a) else 2
 
     # Check leg 2
     a2h = match.get("actual_leg2_home")
@@ -397,12 +395,12 @@ def compute_points(prediction, match):
         p2a = prediction.get("leg2_away")
         if p2h is not None and p2a is not None:
             if p2h == a2h and p2a == a2a:
-                points["leg2"] = 10
+                points["leg2"] = 6
             else:
                 actual_outcome = (a2h > a2a) - (a2h < a2a)
                 pred_outcome = (p2h > p2a) - (p2h < p2a)
                 if actual_outcome == pred_outcome:
-                    points["leg2"] = 7 if (a2h - a2a) == (p2h - p2a) else 5
+                    points["leg2"] = 4 if (a2h - a2a) == (p2h - p2a) else 2
 
     points["total"] = points["leg1"] + points["leg2"]
     return points
