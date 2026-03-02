@@ -17,6 +17,7 @@ UCL Forecast is a private prediction game for a closed group of friends (up to 1
 |---|---|---|
 | Language | Python 3.12 | Widely supported, rapid development |
 | Web framework | Flask (micro-framework) | Minimal overhead for a small, closed app |
+| WSGI server | Gunicorn | Production-grade serving; replaces Flask dev server on Render |
 | Frontend | Bootstrap 5.3 (dark theme) | No custom JavaScript; zero client-side build tooling |
 | Data storage | JSON flat file (`data.json`) | No database infrastructure needed for ≤12 users |
 | Hosting | Render (PaaS) | Zero-ops deployment via git push |
@@ -62,7 +63,7 @@ UCL Forecast is a private prediction game for a closed group of friends (up to 1
 The entire application — routing, business logic, data access, authentication, and email — lives in one Python file (`app.py`, ~970 lines). This is an intentional trade-off: for a private app with 12 users and a single developer, the simplicity of one file outweighs the maintainability benefits of a layered architecture.
 
 ### Flat-File Data Storage
-All application state (users, predictions, match results) is persisted to a single JSON file on the server's local disk. There is no database. This eliminates infrastructure complexity and operational overhead entirely. The trade-off is that the app cannot run across multiple server instances, and data backups must be managed manually. For the target scale (12 users, one tournament), this is appropriate.
+All application state (users, predictions, match results) is persisted to a single JSON file (`data.json`). There is no database. This eliminates infrastructure complexity and operational overhead entirely. The file path is configurable via the `DATA_DIR` environment variable, which should point to a Render persistent disk (e.g. `/data`) so that user registrations and results survive new code deployments. Without a persistent disk, the free tier wipes the file on each deploy — match configurations are recovered automatically from hardcoded seed data, but user accounts would be lost.
 
 ### No Client-Side JavaScript
 The UI is rendered entirely server-side using HTML templates. Bootstrap provides layout and styling; no custom JavaScript exists. This minimises attack surface, eliminates frontend build tooling, and makes the codebase trivially auditable.
@@ -83,7 +84,7 @@ To avoid reading `data.json` on every database call within a single HTTP request
 | Session security | Server-side Flask sessions; secret key should be set via environment variable in production |
 | User cap | Hard-coded maximum of 12 registered users; no public sign-up beyond this limit |
 
-**Notable limitation:** `data.json` is stored on the same server instance that runs the application. There is no automated backup. Loss of the server volume would mean loss of all predictions and results.
+**Notable limitation:** `data.json` is stored on disk. Without a Render persistent disk, it is wiped on each new deployment (free tier behaviour). With a persistent disk (`DATA_DIR=/data`), data survives deployments but there is still no automated backup — periodic manual copies of `data.json` are recommended.
 
 ---
 
@@ -103,7 +104,7 @@ Developer laptop
   Render (live app)
 ```
 
-Configuration is managed through Render's environment variable settings, keeping secrets (admin password, SMTP credentials) out of the codebase.
+Configuration is managed through Render's environment variable settings, keeping secrets out of the codebase. The production start command is `gunicorn app:app --bind 0.0.0.0:$PORT` (not the Flask dev server). A persistent disk mounted at `/data` with `DATA_DIR=/data` ensures user data survives deployments.
 
 ---
 
@@ -136,7 +137,9 @@ This architecture is deliberately scoped to its purpose. It is not designed for 
 | Task | How |
 |---|---|
 | Change admin password | Set `ADMIN_PASSWORD` env var in Render dashboard |
+| Persist user data across deploys | Add Render persistent disk at `/data`; set `DATA_DIR=/data` env var |
 | Enable password-reset emails | Set `SMTP_USER`, `SMTP_PASS`, `APP_BASE_URL` env vars |
 | Add/edit matches or results | Log in to `/admin` with the admin password |
 | Deploy a code change | `git push origin master` (Render auto-deploys) |
-| Back up data | Manually copy `data.json` from Render's disk via shell |
+| Switch to production WSGI server | Set Render start command to `gunicorn app:app --bind 0.0.0.0:$PORT` |
+| Back up data | Manually copy `data.json` from the persistent disk via Render shell |
