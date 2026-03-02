@@ -43,14 +43,14 @@ DEFAULT_DATA = {
 # Display offsets: EDT = UTC-4, COT (Bogota/Lima) = UTC-5.
 # Order matches to match bracket image pairings: (1,2)→QF1, (3,4)→QF2, (5,6)→QF3, (7,8)→QF4.
 SEED_MATCHES = [
-    {"home_team": "PSG",             "away_team": "Chelsea",      "leg1_deadline": "2026-03-11T20:00:00", "leg2_deadline": "2026-03-17T20:00:00"},
-    {"home_team": "Galatasaray",     "away_team": "Liverpool",    "leg1_deadline": "2026-03-10T17:45:00", "leg2_deadline": "2026-03-18T20:00:00"},
-    {"home_team": "Real Madrid",     "away_team": "Man City",     "leg1_deadline": "2026-03-11T20:00:00", "leg2_deadline": "2026-03-17T20:00:00"},
-    {"home_team": "Atalanta",        "away_team": "Bayern Munich", "leg1_deadline": "2026-03-10T20:00:00", "leg2_deadline": "2026-03-18T20:00:00"},
-    {"home_team": "Newcastle",       "away_team": "Barcelona",    "leg1_deadline": "2026-03-10T20:00:00", "leg2_deadline": "2026-03-18T17:45:00"},
-    {"home_team": "Atletico Madrid", "away_team": "Tottenham",    "leg1_deadline": "2026-03-10T20:00:00", "leg2_deadline": "2026-03-18T20:00:00"},
-    {"home_team": "Bodo/Glimt",      "away_team": "Sporting CP",  "leg1_deadline": "2026-03-11T20:00:00", "leg2_deadline": "2026-03-17T17:45:00"},
-    {"home_team": "Bayer Leverkusen","away_team": "Arsenal",      "leg1_deadline": "2026-03-11T17:45:00", "leg2_deadline": "2026-03-17T20:00:00"},
+    {"round": "r16", "home_team": "PSG",             "away_team": "Chelsea",       "leg1_deadline": "2026-03-11T20:00:00", "leg2_deadline": "2026-03-17T20:00:00"},
+    {"round": "r16", "home_team": "Galatasaray",     "away_team": "Liverpool",     "leg1_deadline": "2026-03-10T17:45:00", "leg2_deadline": "2026-03-18T20:00:00"},
+    {"round": "r16", "home_team": "Real Madrid",     "away_team": "Man City",      "leg1_deadline": "2026-03-11T20:00:00", "leg2_deadline": "2026-03-17T20:00:00"},
+    {"round": "r16", "home_team": "Atalanta",        "away_team": "Bayern Munich", "leg1_deadline": "2026-03-10T20:00:00", "leg2_deadline": "2026-03-18T20:00:00"},
+    {"round": "r16", "home_team": "Newcastle",       "away_team": "Barcelona",     "leg1_deadline": "2026-03-10T20:00:00", "leg2_deadline": "2026-03-18T17:45:00"},
+    {"round": "r16", "home_team": "Atletico Madrid", "away_team": "Tottenham",     "leg1_deadline": "2026-03-10T20:00:00", "leg2_deadline": "2026-03-18T20:00:00"},
+    {"round": "r16", "home_team": "Bodo/Glimt",      "away_team": "Sporting CP",   "leg1_deadline": "2026-03-11T20:00:00", "leg2_deadline": "2026-03-17T17:45:00"},
+    {"round": "r16", "home_team": "Bayer Leverkusen","away_team": "Arsenal",       "leg1_deadline": "2026-03-11T17:45:00", "leg2_deadline": "2026-03-17T20:00:00"},
 ]
 
 SUPPORTED_LANGS = {"en", "es"}
@@ -282,6 +282,11 @@ def migrate_data(data):
             user_record["preferred_lang"] = None
             migration_needed = True
 
+    for match in data.get("matches", []):
+        if "round" not in match:
+            match["round"] = "r16"
+            migration_needed = True
+
     if not data.get("matches"):
         data["matches"] = [
             {
@@ -372,6 +377,12 @@ def compute_points(prediction, match):
     if not prediction:
         return points
 
+    # Scoring tier by round: R16 uses 6/4/2; QF and beyond use 10/7/5
+    if match.get("round", "r16") == "r16":
+        pts_exact, pts_gd, pts_result = 6, 4, 2
+    else:
+        pts_exact, pts_gd, pts_result = 10, 7, 5
+
     # Check leg 1
     a1h = match.get("actual_leg1_home")
     a1a = match.get("actual_leg1_away")
@@ -380,12 +391,12 @@ def compute_points(prediction, match):
         p1a = prediction.get("leg1_away")
         if p1h is not None and p1a is not None:
             if p1h == a1h and p1a == a1a:
-                points["leg1"] = 6
+                points["leg1"] = pts_exact
             else:
                 actual_outcome = (a1h > a1a) - (a1h < a1a)
                 pred_outcome = (p1h > p1a) - (p1h < p1a)
                 if actual_outcome == pred_outcome:
-                    points["leg1"] = 4 if (a1h - a1a) == (p1h - p1a) else 2
+                    points["leg1"] = pts_gd if (a1h - a1a) == (p1h - p1a) else pts_result
 
     # Check leg 2
     a2h = match.get("actual_leg2_home")
@@ -395,12 +406,12 @@ def compute_points(prediction, match):
         p2a = prediction.get("leg2_away")
         if p2h is not None and p2a is not None:
             if p2h == a2h and p2a == a2a:
-                points["leg2"] = 6
+                points["leg2"] = pts_exact
             else:
                 actual_outcome = (a2h > a2a) - (a2h < a2a)
                 pred_outcome = (p2h > p2a) - (p2h < p2a)
                 if actual_outcome == pred_outcome:
-                    points["leg2"] = 4 if (a2h - a2a) == (p2h - p2a) else 2
+                    points["leg2"] = pts_gd if (a2h - a2a) == (p2h - p2a) else pts_result
 
     points["total"] = points["leg1"] + points["leg2"]
     return points
@@ -914,6 +925,7 @@ def admin():
             new_id = max((m["id"] for m in data["matches"]), default=0) + 1
             data["matches"].append({
                 "id": new_id,
+                "round": request.form.get("round", "r16"),
                 "home_team": request.form.get("home_team", "TBD"),
                 "away_team": request.form.get("away_team", "TBD"),
                 "leg1_deadline": request.form.get("leg1_deadline", ""),

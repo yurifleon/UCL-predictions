@@ -80,11 +80,20 @@
         <form method="POST">
             <input type="hidden" name="action" value="add_match">
             <div class="row g-2">
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label class="form-label">{{ _('Round') }}</label>
+                    <select class="form-select" name="round">
+                        <option value="r16">{{ _('Round of 16') }}</option>
+                        <option value="qf">{{ _('Quarter-finals') }}</option>
+                        <option value="sf">{{ _('Semi-finals') }}</option>
+                        <option value="final">{{ _('Final') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label">{{ _('Home Team (Leg 1)') }}</label>
                     <input type="text" class="form-control" name="home_team" required>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label">{{ _('Away Team (Leg 1)') }}</label>
                     <input type="text" class="form-control" name="away_team" required>
                 </div>

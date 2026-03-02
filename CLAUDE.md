@@ -97,12 +97,16 @@ This is a minimal single-file Flask app (`app.py`) for a UCL Champions League Ro
 - `get_cached_time()` — stores `datetime.now()` in `g.now` once per request (set in `before_request`); used by `is_leg_locked()` so the clock doesn't drift mid-request.
 - `get_match_by_id()` — builds a `{id: match}` dict in `g._match_cache` on first call per request.
 
-**Scoring (`compute_points`):**
-- 6 pts — exact score for a leg
-- 4 pts — correct result + correct goal difference for a leg
-- 2 pts — correct result only for a leg
-- Max 12 pts per tie (6 + 6); no qualifier bonus
-- `points["qualifier"]` is always 0 and kept only for schema compatibility
+**Scoring (`compute_points`):** Tier depends on `match["round"]` (default `"r16"` if missing).
+
+| Outcome | R16 | QF / SF / Final |
+|---|---|---|
+| Exact score | 6 pts | 10 pts |
+| Correct result + goal difference | 4 pts | 7 pts |
+| Correct result only | 2 pts | 5 pts |
+| Max per tie | 12 pts | 20 pts |
+
+`points["qualifier"]` is always 0 and kept only for schema compatibility.
 
 Aggregate qualifier logic (used for `/bracket` display only — no longer affects scoring): team A = leg1 home team. `agg_home = actual_leg1_home + actual_leg2_away`. On aggregate tie, team A advances unless team B won leg 2 outright (`a2h >= a2a` → team A; `a2h < a2a` → team B). `get_qualifier(match)` returns the qualifying team name. `build_leaderboard(data)` returns sorted rows of `{user, total, breakdown}`.
 

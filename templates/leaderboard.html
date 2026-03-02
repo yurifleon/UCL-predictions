@@ -45,12 +45,15 @@
 <h5 class="mt-4">{{ _('Scoring System') }}</h5>
 <div class="card">
     <div class="card-body">
-        <ul class="mb-0">
-            <li><strong>{{ _('Exact score:') }}</strong> {{ _('6 points (per leg)') }}</li>
-            <li><strong>{{ _('Correct result + goal difference:') }}</strong> {{ _('4 points (per leg)') }}</li>
-            <li><strong>{{ _('Correct result only:') }}</strong> {{ _('2 points (per leg)') }}</li>
-            <li><strong>{{ _('Max per tie:') }}</strong> {{ _('12 points (6 + 6)') }}</li>
-        </ul>
+        <table class="table table-sm mb-0">
+            <thead><tr><th></th><th>{{ _('Round of 16') }}</th><th>{{ _('Quarter-finals') }} +</th></tr></thead>
+            <tbody>
+                <tr><td><strong>{{ _('Exact score:') }}</strong></td><td>6 pts</td><td>10 pts</td></tr>
+                <tr><td><strong>{{ _('Correct result + goal difference:') }}</strong></td><td>4 pts</td><td>7 pts</td></tr>
+                <tr><td><strong>{{ _('Correct result only:') }}</strong></td><td>2 pts</td><td>5 pts</td></tr>
+                <tr><td><strong>{{ _('Max per tie:') }}</strong></td><td>12 pts</td><td>20 pts</td></tr>
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
