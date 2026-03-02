@@ -28,7 +28,8 @@ def deadline_tz_filter(iso_str):
     except (ValueError, TypeError):
         return iso_str
 
-DATA_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.json")
+_data_dir = os.environ.get("DATA_DIR", os.path.dirname(os.path.abspath(__file__)))
+DATA_FILE = os.path.join(_data_dir, "data.json")
 
 DEFAULT_DATA = {
     "users": {},
