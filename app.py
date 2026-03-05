@@ -112,7 +112,7 @@ SPANISH_TRANSLATIONS = {
     "UCL Forecast - Register": "UCL Forecast - Registro",
     "Create Account": "Crear cuenta",
     "Join the UCL Forecast game": "Únete al juego UCL Forecast",
-    "Choose a username": "Elige un usuario",
+    "Choose a username": "Crea tu nombre de usuario",
     "Email": "Correo",
     "At least 6 characters": "Al menos 6 caracteres",
     "Confirm Password": "Confirmar contraseña",
