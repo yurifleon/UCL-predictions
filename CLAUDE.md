@@ -24,9 +24,9 @@ python -m py_compile app.py
 # Quick function test (e.g. scoring logic)
 python -c "
 from app import compute_points
-match = {'actual_leg1_home': 2, 'actual_leg1_away': 0, 'actual_leg2_home': 3, 'actual_leg2_away': 1}
+match = {'round': 'r16', 'actual_leg1_home': 2, 'actual_leg1_away': 0, 'actual_leg2_home': 3, 'actual_leg2_away': 1}
 pred  = {'leg1_home': 2, 'leg1_away': 0, 'leg2_home': 1, 'leg2_away': 0}
-print(compute_points(pred, match))  # expects {'leg1':10,'leg2':5,'qualifier':0,'total':15}
+print(compute_points(pred, match))  # expects {'leg1':6,'leg2':2,'qualifier':0,'total':8}
 "
 
 # Deploy to Render (branch watched by your service)
@@ -62,7 +62,7 @@ This is a minimal single-file Flask app (`app.py`) for a UCL Champions League Ro
     }
   },
   "admin_password": "admin123",
-  "matches": [{ "id": 1, "home_team": "...", "away_team": "...",
+  "matches": [{ "id": 1, "round": "r16", "home_team": "...", "away_team": "...",
                 "leg1_deadline": "2026-03-10T20:00:00",
                 "leg2_deadline": "2026-03-18T20:00:00",
                 "actual_leg1_home": null, "actual_leg1_away": null,
@@ -71,13 +71,13 @@ This is a minimal single-file Flask app (`app.py`) for a UCL Champions League Ro
 }
 ```
 
-`migrate_data(data)` runs inside `load_data()`: if `data["users"]` is a list (old format), it converts each username to a dict entry with all fields `null` and saves. It also backfills `preferred_lang: null` for any user record missing that key. If `data["matches"]` is empty, it seeds all 8 R16 matches from the `SEED_MATCHES` constant (deadlines stored in UTC). This ensures fresh deployments always have matches configured. Migrated users (no `password_hash`) are prompted to set an email/password on their next login.
+`migrate_data(data)` runs inside `load_data()`: if `data["users"]` is a list (old format), it converts each username to a dict entry with all fields `null` and saves. It also backfills `preferred_lang: null` for any user record missing that key, and backfills `round: "r16"` for any match missing that field. If `data["matches"]` is empty, it seeds all 8 R16 matches from the `SEED_MATCHES` constant (deadlines stored in UTC). This ensures fresh deployments always have matches configured. Migrated users (no `password_hash`) are prompted to set an email/password on their next login.
 
 **Critical type gotcha:** Match `id` is an `int` inside `matches[]`, but predictions are keyed by `str(match["id"])`. Always use `str(match_id)` when reading/writing `data["predictions"][username]`.
 
 **Auth:** Username + password login. Self-registration at `/register` (username, email, password; still capped at 12). Password reset via SMTP email (`/forgot-password` → `/reset-password/<token>`; 1-hour token). Migrated users (no password_hash) are redirected to `/complete-profile` after login. Admin access is a separate password stored in `data.json`, gated by `session["is_admin"]`. The admin nav link is shown to all logged-in users but the panel requires the password.
 
-`app.secret_key` is hardcoded in the source (`"ucl-forecast-secret-key-change-me"`). For production, override it via an env var.
+`app.secret_key` is hardcoded in the source (`"ucl-forecast-secret-key-change-me"`). There is no env var override — to change it you must edit the source.
 
 **All env vars:**
 | Var | Default | Purpose |

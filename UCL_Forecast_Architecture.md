@@ -7,7 +7,7 @@
 
 ## What the Application Does
 
-UCL Forecast is a private prediction game for a closed group of friends (up to 12 participants) built around the UEFA Champions League 2025-26 Round of 16. Users predict scorelines for each two-legged tie across all 8 Round of 16 matches; points are awarded for exact scores, correct goal differences, and correct match outcomes. A live leaderboard ranks all participants throughout the round. The bracket view tracks progression from the Round of 16 through the Quarter-finals, Semi-finals, and Final.
+UCL Forecast is a private prediction game for a closed group of friends (up to 12 participants) built around the UEFA Champions League 2025-26 knockout rounds. Users predict scorelines for two-legged ties across all rounds (Round of 16 through Final); points are awarded using a tiered scoring system that rewards higher-stakes matches more. A live leaderboard ranks all participants throughout the tournament. The bracket view tracks progression from the Round of 16 through the Quarter-finals, Semi-finals, and Final.
 
 ---
 
@@ -118,6 +118,21 @@ All user-facing strings are routed through a translation layer. Adding a new lan
 
 ---
 
+## Scoring System
+
+Points are awarded per leg of each two-legged tie. The scoring tier is determined by the round stored on each match (`round` field), so the same prediction logic applies across all rounds with automatic weighting.
+
+| Outcome | Round of 16 | Quarter-finals / Semi-finals / Final |
+|---|---|---|
+| Exact score | 6 pts | 10 pts |
+| Correct result + goal difference | 4 pts | 7 pts |
+| Correct result only | 2 pts | 5 pts |
+| **Max per tie** | **12 pts** | **20 pts** |
+
+The 8 Round of 16 matches are pre-seeded in code and auto-created on fresh deployments. Quarter-final, Semi-final, and Final matches are added by the admin as those rounds are reached.
+
+---
+
 ## Scalability and Limitations
 
 | Dimension | Current limit | Why |
@@ -126,7 +141,7 @@ All user-facing strings are routed through a translation layer. Adding a new lan
 | Registered users | 12 (hard cap) | Business requirement; enforced in code |
 | Data durability | Local disk only | No database replication or backups |
 | High availability | Single instance | No load balancing; Render free-tier restarts on inactivity |
-| Tournament scope | Round of 16 predictions | Scoring covers R16 only; bracket view shows R16 → QF → SF → Final |
+| Tournament scope | Full knockout (R16 → Final) | Admin adds matches per round; scoring tier adjusts automatically |
 
 This architecture is deliberately scoped to its purpose. It is not designed for growth beyond the current use case.
 
@@ -139,7 +154,7 @@ This architecture is deliberately scoped to its purpose. It is not designed for 
 | Change admin password | Set `ADMIN_PASSWORD` env var in Render dashboard |
 | Persist user data across deploys | Add Render persistent disk at `/data`; set `DATA_DIR=/data` env var |
 | Enable password-reset emails | Set `SMTP_USER`, `SMTP_PASS`, `APP_BASE_URL` env vars |
-| Add/edit matches or results | Log in to `/admin` with the admin password |
+| Add/edit matches or results | Log in to `/admin`; select the round when adding a match (scoring tier applied automatically) |
 | Deploy a code change | `git push origin master` (Render auto-deploys) |
 | Switch to production WSGI server | Set Render start command to `gunicorn app:app --bind 0.0.0.0:$PORT` |
 | Back up data | Manually copy `data.json` from the persistent disk via Render shell |

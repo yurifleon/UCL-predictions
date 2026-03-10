@@ -485,7 +485,7 @@ def before_request():
         lang = session.get("lang")
     if lang not in SUPPORTED_LANGS:
         best = request.accept_languages.best_match(["en", "es"])
-        lang = best if best in SUPPORTED_LANGS else "es"
+        lang = best if best in SUPPORTED_LANGS else "en"
 
     session["lang"] = lang
     g.lang = lang
