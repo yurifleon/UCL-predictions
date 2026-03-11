@@ -127,6 +127,9 @@ SPANISH_TRANSLATIONS = {
     "Save & Continue": "Guardar y continuar",
     "UCL Forecast - Forgot Password": "UCL Forecast - Recuperar contraseña",
     "Reset Password": "Restablecer contraseña",
+    "Reset User Password": "Restablecer contraseña de usuario",
+    "Select user": "Seleccionar usuario",
+    "Password reset for '{username}'.": "Contraseña restablecida para '{username}'.",
     "Enter your email to receive a reset link": (
         "Introduce tu correo para recibir un enlace de restablecimiento"
     ),
@@ -976,6 +979,27 @@ def admin():
                     session.pop("username", None)
             else:
                 flash(translate("User not found."), "danger")
+            return redirect(url_for("admin"))
+
+        # Reset user password
+        if action == "reset_user_password":
+            username_to_reset = request.form.get("username_to_reset", "").strip().lower()
+            new_password = request.form.get("new_password", "")
+            confirm_password = request.form.get("confirm_new_password", "")
+            if username_to_reset not in data["users"]:
+                flash(translate("User not found."), "danger")
+            elif not new_password or not confirm_password:
+                flash(translate("Both fields are required."), "danger")
+            elif new_password != confirm_password:
+                flash(translate("Passwords do not match."), "danger")
+            elif len(new_password) < 6:
+                flash(translate("Password must be at least 6 characters."), "danger")
+            else:
+                data["users"][username_to_reset]["password_hash"] = generate_password_hash(new_password)
+                data["users"][username_to_reset]["reset_token"] = None
+                data["users"][username_to_reset]["reset_expires"] = None
+                save_data(data)
+                flash(translate("Password reset for '{username}'.", username=username_to_reset), "success")
             return redirect(url_for("admin"))
 
         # Delete match

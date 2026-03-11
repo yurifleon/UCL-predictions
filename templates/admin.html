@@ -73,6 +73,36 @@
     </div>
 </div>
 
+<!-- Reset User Password -->
+<div class="card mb-4">
+    <div class="card-header">{{ _('Reset User Password') }}</div>
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="action" value="reset_user_password">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <label class="form-label">{{ _('Username') }}</label>
+                    <select class="form-select" name="username_to_reset" required>
+                        <option value="">{{ _('Select user') }}</option>
+                        {% for user in data.users %}
+                        <option value="{{ user }}">{{ user }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ _('New Password') }}</label>
+                    <input type="password" class="form-control" name="new_password" required minlength="6" autocomplete="new-password">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">{{ _('Confirm Password') }}</label>
+                    <input type="password" class="form-control" name="confirm_new_password" required minlength="6" autocomplete="new-password">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-warning mt-3">{{ _('Reset Password') }}</button>
+        </form>
+    </div>
+</div>
+
 <!-- Add Match -->
 <div class="card mb-4">
     <div class="card-header">{{ _('Add Round of 16 Match') }}</div>
