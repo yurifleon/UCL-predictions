@@ -250,7 +250,7 @@ def _is_safe_next_url(target):
 
 def get_cached_time():
     if "now" not in g:
-        g.now = datetime.now()
+        g.now = datetime.utcnow()
     return g.now
 
 
