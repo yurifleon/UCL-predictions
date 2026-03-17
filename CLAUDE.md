@@ -21,6 +21,9 @@ gunicorn app:app --bind 0.0.0.0:5000
 # Syntax check (no test suite exists)
 python -m py_compile app.py
 
+# Optional lint (if ruff is installed)
+ruff check app.py
+
 # Quick function test (e.g. scoring logic)
 python -c "
 from app import compute_points
@@ -120,6 +123,8 @@ Aggregate qualifier logic (used for `/bracket` display only — no longer affect
 
 **Localization:** Two languages are supported: English (`en`) and Spanish (`es`), stored in `SUPPORTED_LANGS`. All user-facing strings pass through `translate(text, **kwargs)`, which looks up `SPANISH_TRANSLATIONS` when `g.lang == "es"`. The `_` shorthand is injected into every Jinja2 template via `inject_i18n_helpers`. Language resolution order (highest priority first): user's `preferred_lang` DB field → `session["lang"]` → browser `Accept-Language` header → default `"en"`. Saving a prediction at `/set-language/<lang>` also persists `preferred_lang` to the user record.
 
+**Flask route patterns:** Gate private pages with `session.get("username")` checks at the top. For migrated users without a password hash, gate with `user_profile_complete(user)` and redirect to `/complete-profile`. Admin routes check `session["is_admin"]`. Keep business logic in Python helpers, not templates.
+
 **Routes summary:**
 - `/` — sign-in form (home.html)
 - `/register` — new user registration
@@ -132,3 +137,26 @@ Aggregate qualifier logic (used for `/bracket` display only — no longer affect
 - `/leaderboard` — full leaderboard with per-match breakdown
 - `/bracket` — full tournament bracket: R16 results and qualifiers → QF/SF/Final (TBD slots)
 - `/admin` — admin panel (match management + user management)
+
+## Code Style
+
+- 4-space indentation, PEP 8 conventions, f-strings over `%`/`.format()`.
+- Functions/variables: `snake_case`. Constants: `UPPER_SNAKE_CASE`. Template filenames: lowercase with underscores.
+- Add type hints only when they genuinely improve clarity; use modern built-in generics (`dict[str, int]`).
+- Use `flash(..., "danger"|"warning"|"success"|"info")` for user feedback. Catch specific exceptions (`ValueError`, `TypeError`, `KeyError`).
+- On schema changes, add migration logic near `migrate_data`. When deleting match/user entities, clean related prediction data.
+
+## Common Gotchas
+
+- `matches` uses integer IDs; prediction maps use string keys — always convert with `str(match_id)`.
+- Mutating in-memory `data` without calling `save_data(data)` silently drops changes.
+- Editing users/matches without related cleanup leaves orphaned prediction entries.
+- Changing `compute_points` or `get_qualifier` requires validating dashboard, leaderboard, and bracket paths.
+- Touching `migrate_data` assumptions can break migrated users (those with `password_hash: null`).
+
+## Pre-Completion Checklist
+
+1. `python -m py_compile app.py` passes.
+2. Run the quick function test for any scoring logic touched.
+3. Smoke-test impacted routes manually when behavior changes.
+4. No secrets or runtime `data.json` accidentally staged.
