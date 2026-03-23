@@ -2,7 +2,7 @@ import json
 import os
 import secrets
 import smtplib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from email.mime.text import MIMEText
 from functools import lru_cache
 from urllib.parse import urlparse
@@ -250,7 +250,7 @@ def _is_safe_next_url(target):
 
 def get_cached_time():
     if "now" not in g:
-        g.now = datetime.utcnow()
+        g.now = datetime.now(timezone.utc).replace(tzinfo=None)
     return g.now
 
 
@@ -768,6 +768,8 @@ def dashboard():
             "leg2_locked": leg2_locked,
             "fully_locked": leg1_locked and leg2_locked,
         })
+    round_order = {"qf": 0, "r16": 1, "sf": 2, "final": 3}
+    matches_info.sort(key=lambda x: round_order.get(x["match"].get("round", "r16"), 99))
     leaderboard = build_leaderboard(data)
     return render_template("dashboard.html", username=username, matches_info=matches_info, leaderboard=leaderboard)
 
