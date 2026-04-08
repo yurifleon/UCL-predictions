@@ -201,7 +201,7 @@ SPANISH_TRANSLATIONS = {
     "Remove user {user}? Their predictions will be deleted.": (
         "¿Eliminar usuario {user}? Sus pronósticos se borrarán."
     ),
-    "Add Round of 16 Match": "Agregar partido de octavos",
+    "Add Match": "Agregar partido",
     "Home Team (Leg 1)": "Equipo local (ida)",
     "Away Team (Leg 1)": "Equipo visitante (ida)",
     "Leg 1 Deadline": "Cierre ida",
@@ -1014,7 +1014,9 @@ def admin():
             flash(translate("Match deleted."), "success")
             return redirect(url_for("admin"))
 
-    return render_template("admin.html", data=data, is_admin=session.get("is_admin", False))
+    round_order = {"qf": 0, "r16": 1, "sf": 2, "final": 3}
+    sorted_matches = sorted(data["matches"], key=lambda m: round_order.get(m.get("round", "r16"), 99))
+    return render_template("admin.html", data=data, matches=sorted_matches, is_admin=session.get("is_admin", False))
 
 
 if __name__ == "__main__":

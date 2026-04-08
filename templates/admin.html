@@ -105,7 +105,7 @@
 
 <!-- Add Match -->
 <div class="card mb-4">
-    <div class="card-header">{{ _('Add Round of 16 Match') }}</div>
+    <div class="card-header">{{ _('Add Match') }}</div>
     <div class="card-body">
         <form method="POST">
             <input type="hidden" name="action" value="add_match">
@@ -142,7 +142,7 @@
 </div>
 
 <!-- Existing Matches -->
-{% for m in data.matches %}
+{% for m in matches %}
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><strong>{{ _('Match {id}:', id=m.id) }}</strong> {{ m.home_team }} vs {{ m.away_team }}</span>
