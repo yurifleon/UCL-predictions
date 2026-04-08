@@ -115,15 +115,17 @@ Aggregate qualifier logic (used for `/bracket` display only — no longer affect
 
 **Templates:** Jinja2 templates in `templates/`, all extending `base.html`. Bootstrap 5.3 dark theme with a UCL blue color scheme. No JS beyond Bootstrap bundle (no custom JS). All CSS lives inline in `base.html` `<style>` block. UCL blue palette: `#1e50a0` (primary), `#4da3ff` (accent), `#0a0e27` (body bg).
 
-**Deadline display (`deadline_tz` filter):** Deadlines are stored in UTC ISO format. The `deadline_tz` Jinja2 template filter converts them to a human-readable string in Central Time / Lima time (both UTC-5 in March-April 2026 after US DST). Example output: `Mar 10, 03:00 PM CT / LIM`.
+**Deadline display (`deadline_tz` filter):** Deadlines are stored as CDT / Lima time (UTC-5) ISO strings. The `deadline_tz` filter formats them directly with a `CDT / LIM` label — no conversion needed. Example output: `Apr 08, 04:00 PM CDT / LIM`. Enter deadlines in CDT: UCL early slot = `13:45`, main slot = `16:00`.
 
-**Deadline locking (`is_leg_locked`):** Compares `get_cached_time()` against ISO-format deadline strings stored per-match. Locked legs cannot be edited by users; admin can always enter/update results.
+**Deadline locking (`is_leg_locked`):** Compares `get_cached_time()` (which returns current CDT time) against the stored CDT deadline strings. Locked legs cannot be edited by users; admin can always enter/update results.
 
-**Admin panel (`/admin`):** Password-gated via `session["is_admin"]`. Supports: add/edit/delete Round of 16 matches, enter results, create users (`add_user` action — same fields as `/register`, cap still enforced), and remove registered users (also deletes their predictions and invalidates their session). All admin actions are POST with an `action` field dispatching to the relevant branch.
+**Admin panel (`/admin`):** Password-gated via `session["is_admin"]`. Supports: add/edit/delete matches, enter results, create users (`add_user` action — same fields as `/register`, cap still enforced), remove registered users (also deletes their predictions and invalidates their session), and reset a user's password (`reset_user_password` action). All admin actions are POST with an `action` field dispatching to the relevant branch. Note: `edit_match` only updates home/away team names and deadlines — it does **not** allow changing the `round` field; to change a round, delete and re-add the match.
 
 **Localization:** Two languages are supported: English (`en`) and Spanish (`es`), stored in `SUPPORTED_LANGS`. All user-facing strings pass through `translate(text, **kwargs)`, which looks up `SPANISH_TRANSLATIONS` when `g.lang == "es"`. The `_` shorthand is injected into every Jinja2 template via `inject_i18n_helpers`. Language resolution order (highest priority first): user's `preferred_lang` DB field → `session["lang"]` → browser `Accept-Language` header → default `"en"`. Saving a prediction at `/set-language/<lang>` also persists `preferred_lang` to the user record.
 
 **Flask route patterns:** Gate private pages with `session.get("username")` checks at the top. For migrated users without a password hash, gate with `user_profile_complete(user)` and redirect to `/complete-profile`. Admin routes check `session["is_admin"]`. Keep business logic in Python helpers, not templates.
+
+**Dashboard match ordering:** Matches are sorted by round: QF first (`0`), then R16 (`1`), SF (`2`), Final (`3`). This puts the currently-active knockout round at the top for users. Unknown rounds sort last (`99`).
 
 **Routes summary:**
 - `/` — sign-in form (home.html)

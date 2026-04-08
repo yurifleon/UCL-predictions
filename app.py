@@ -16,15 +16,13 @@ app.secret_key = "ucl-forecast-secret-key-change-me"
 
 @app.template_filter("deadline_tz")
 def deadline_tz_filter(iso_str):
-    """Convert a UTC ISO deadline string to ET and Bogota/Lima (COT) for display."""
+    """Display a CDT/Lima ISO deadline string (deadlines stored as CDT = Lima = UTC-5)."""
     if not iso_str:
         return ""
     try:
-        dt_utc = datetime.fromisoformat(iso_str)
-        # March-April 2026: CDT = UTC-5 (same as Lima)
-        dt_ct = dt_utc - timedelta(hours=5)
+        dt = datetime.fromisoformat(iso_str)
         fmt = "%b %d, %I:%M %p"
-        return f"{dt_ct.strftime(fmt)} CT / LIM"
+        return f"{dt.strftime(fmt)} CDT / LIM"
     except (ValueError, TypeError):
         return iso_str
 
@@ -38,9 +36,8 @@ DEFAULT_DATA = {
     "predictions": {},
 }
 
-# Deadlines stored in UTC. March 2026: Europe on CET (UTC+1), so UCL kick-offs
-# 18:45 CET = 17:45 UTC, 21:00 CET = 20:00 UTC.
-# Display offsets: EDT = UTC-4, COT (Bogota/Lima) = UTC-5.
+# Deadlines stored as CDT / Lima time (UTC-5). Enter kick-off times in CDT directly.
+# UCL kick-offs in CDT: 13:45 (18:45 CET early slot) or 16:00 (21:00 CET main slot).
 # Order matches to match bracket image pairings: (1,2)→QF1, (3,4)→QF2, (5,6)→QF3, (7,8)→QF4.
 SEED_MATCHES = [
     {"round": "r16", "home_team": "PSG",             "away_team": "Chelsea",       "leg1_deadline": "2026-03-11T20:00:00", "leg2_deadline": "2026-03-17T20:00:00"},
@@ -250,7 +247,9 @@ def _is_safe_next_url(target):
 
 def get_cached_time():
     if "now" not in g:
-        g.now = datetime.now(timezone.utc).replace(tzinfo=None)
+        # Deadlines are stored as CDT / Lima (UTC-5); compare against CDT now.
+        cdt = timezone(timedelta(hours=-5))
+        g.now = datetime.now(cdt).replace(tzinfo=None)
     return g.now
 
 
