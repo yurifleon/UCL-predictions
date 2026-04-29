@@ -767,7 +767,7 @@ def dashboard():
             "leg2_locked": leg2_locked,
             "fully_locked": leg1_locked and leg2_locked,
         })
-    round_order = {"qf": 0, "r16": 1, "sf": 2, "final": 3}
+    round_order = {"sf": 0, "qf": 1, "r16": 2, "final": 3}
     matches_info.sort(key=lambda x: round_order.get(x["match"].get("round", "r16"), 99))
     leaderboard = build_leaderboard(data)
     return render_template("dashboard.html", username=username, matches_info=matches_info, leaderboard=leaderboard)
@@ -1014,7 +1014,7 @@ def admin():
             flash(translate("Match deleted."), "success")
             return redirect(url_for("admin"))
 
-    round_order = {"qf": 0, "r16": 1, "sf": 2, "final": 3}
+    round_order = {"sf": 0, "qf": 1, "r16": 2, "final": 3}
     sorted_matches = sorted(data["matches"], key=lambda m: round_order.get(m.get("round", "r16"), 99))
     return render_template("admin.html", data=data, matches=sorted_matches, is_admin=session.get("is_admin", False))
 
