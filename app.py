@@ -85,6 +85,7 @@ SPANISH_TRANSLATIONS = {
     "Both fields are required.": "Ambos campos son obligatorios.",
     "Password updated! Please sign in.": "¡Contraseña actualizada! Inicia sesión.",
     "Match not found.": "Partido no encontrado.",
+    "Match (Neutral)": "Partido (Neutral)",
     "Prediction saved!": "¡Pronóstico guardado!",
     "Admin access granted.": "Acceso de admin concedido.",
     "Wrong password.": "Contraseña incorrecta.",
@@ -471,6 +472,10 @@ def is_leg_locked(match, leg):
         return False
 
 
+def is_single_leg(match):
+    return match.get("round") == "final"
+
+
 @app.before_request
 def before_request():
     lang = None
@@ -793,6 +798,10 @@ def predict(match_id):
     leg2_locked = is_leg_locked(match, 2)
 
     if request.method == "POST":
+        if leg1_locked and leg2_locked:
+            flash(translate("Both legs are locked. No changes allowed."), "warning")
+            return redirect(url_for("dashboard"))
+
         if username not in data["predictions"]:
             data["predictions"][username] = {}
         if mid not in data["predictions"][username]:
