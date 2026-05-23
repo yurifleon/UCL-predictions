@@ -46,12 +46,19 @@
 <div class="card">
     <div class="card-body">
         <table class="table table-sm mb-0">
-            <thead><tr><th></th><th>{{ _('Round of 16') }}</th><th>{{ _('Quarter-finals') }} +</th></tr></thead>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>{{ _('Round of 16') }}</th>
+                    <th>{{ _('Quarter-finals') }} / {{ _('Semi-finals') }}</th>
+                    <th>{{ _('Final') }}</th>
+                </tr>
+            </thead>
             <tbody>
-                <tr><td><strong>{{ _('Exact score:') }}</strong></td><td>6 pts</td><td>10 pts</td></tr>
-                <tr><td><strong>{{ _('Correct result + goal difference:') }}</strong></td><td>4 pts</td><td>7 pts</td></tr>
-                <tr><td><strong>{{ _('Correct result only:') }}</strong></td><td>2 pts</td><td>5 pts</td></tr>
-                <tr><td><strong>{{ _('Max per tie:') }}</strong></td><td>12 pts</td><td>20 pts</td></tr>
+                <tr><td><strong>{{ _('Exact score:') }}</strong></td><td>6 pts</td><td>10 pts</td><td>10 pts</td></tr>
+                <tr><td><strong>{{ _('Correct result + goal difference:') }}</strong></td><td>4 pts</td><td>7 pts</td><td>7 pts</td></tr>
+                <tr><td><strong>{{ _('Correct result only:') }}</strong></td><td>2 pts</td><td>5 pts</td><td>5 pts</td></tr>
+                <tr><td><strong>{{ _('Max per tie:') }}</strong></td><td>12 pts</td><td>20 pts</td><td>10 pts</td></tr>
             </tbody>
         </table>
     </div>
