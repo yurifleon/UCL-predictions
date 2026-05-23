@@ -975,7 +975,10 @@ def admin():
             mid = int(request.form.get("match_id", 0))
             match = get_match_by_id(data["matches"], mid)
             if match:
-                for field in ["actual_leg1_home", "actual_leg1_away", "actual_leg2_home", "actual_leg2_away"]:
+                fields = ["actual_leg1_home", "actual_leg1_away"]
+                if not is_single_leg(match):
+                    fields += ["actual_leg2_home", "actual_leg2_away"]
+                for field in fields:
                     val = request.form.get(field, "").strip()
                     match[field] = int(val) if val != "" else None
                 save_data(data)
