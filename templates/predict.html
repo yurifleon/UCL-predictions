@@ -8,7 +8,7 @@
         <form method="POST">
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between">
-                    <span>{{ _('Leg 1 ({team} home)', team=match.home_team) }}</span>
+                    <span>{% if single_leg %}{{ _('Match (Neutral)') }}{% else %}{{ _('Leg 1 ({team} home)', team=match.home_team) }}{% endif %}</span>
                     {% if leg1_locked %}<span class="badge bg-secondary">{{ _('Locked') }}</span>{% endif %}
                 </div>
                 <div class="card-body">
@@ -33,6 +33,7 @@
                 </div>
             </div>
 
+            {% if not single_leg %}
             <div class="card mb-3">
                 <div class="card-header d-flex justify-content-between">
                     <span>{{ _('Leg 2 ({team} home)', team=match.away_team) }}</span>
@@ -59,6 +60,7 @@
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
 
             {% if not (leg1_locked and leg2_locked) %}
             <button type="submit" class="btn btn-primary w-100">{{ _('Save Prediction') }}</button>
