@@ -31,10 +31,12 @@
                                 <td>{{ _('Leg 1:') }}</td>
                                 <td>{{ m.home_team }} {{ pred.leg1_home if pred.leg1_home is not none else '?' }} - {{ pred.leg1_away if pred.leg1_away is not none else '?' }} {{ m.away_team }}</td>
                             </tr>
+                            {% if not info.single_leg %}
                             <tr>
                                 <td>{{ _('Leg 2:') }}</td>
                                 <td>{{ m.away_team }} {{ pred.leg2_home if pred.leg2_home is not none else '?' }} - {{ pred.leg2_away if pred.leg2_away is not none else '?' }} {{ m.home_team }}</td>
                             </tr>
+                            {% endif %}
                         </table>
                         {% else %}
                         <p class="text-muted">{{ _('No prediction yet.') }}
