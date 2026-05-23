@@ -774,6 +774,7 @@ def dashboard():
             "leg1_locked": leg1_locked,
             "leg2_locked": leg2_locked,
             "fully_locked": leg1_locked and leg2_locked,
+            "single_leg": is_single_leg(match),
         })
     round_order = {"sf": 0, "qf": 1, "r16": 2, "final": 3}
     matches_info.sort(key=lambda x: round_order.get(x["match"].get("round", "r16"), 99))
@@ -837,6 +838,7 @@ def predict(match_id):
         prediction=prediction,
         leg1_locked=leg1_locked,
         leg2_locked=leg2_locked,
+        single_leg=is_single_leg(match),
     )
 
 
