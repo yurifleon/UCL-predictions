@@ -53,10 +53,12 @@
                                 <td>{{ _('Leg 1:') }}</td>
                                 <td>{{ m.home_team }} {{ m.actual_leg1_home if m.actual_leg1_home is not none else '-' }} - {{ m.actual_leg1_away if m.actual_leg1_away is not none else '-' }} {{ m.away_team }}</td>
                             </tr>
+                            {% if not info.single_leg %}
                             <tr>
                                 <td>{{ _('Leg 2:') }}</td>
                                 <td>{{ m.away_team }} {{ m.actual_leg2_home if m.actual_leg2_home is not none else '-' }} - {{ m.actual_leg2_away if m.actual_leg2_away is not none else '-' }} {{ m.home_team }}</td>
                             </tr>
+                            {% endif %}
                         </table>
                         {% if info.points.total > 0 %}
                         <span class="badge bg-success">{{ info.points.total }} {{ _('pts') }}</span>
@@ -70,10 +72,12 @@
                     {% else %}
                     <small class="text-muted">{{ _('Leg 1: locked') }}</small><br>
                     {% endif %}
+                    {% if not info.single_leg %}
                     {% if not info.leg2_locked %}
                     <small class="text-warning">{{ _('Leg 2 deadline:') }} {{ m.leg2_deadline | deadline_tz }}</small>
                     {% else %}
                     <small class="text-muted">{{ _('Leg 2: locked') }}</small>
+                    {% endif %}
                     {% endif %}
                 </div>
                 {% endif %}
