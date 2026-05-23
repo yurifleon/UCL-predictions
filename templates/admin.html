@@ -133,7 +133,7 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">{{ _('Leg 2 Deadline') }}</label>
-                    <input type="datetime-local" class="form-control" name="leg2_deadline" required>
+                    <input type="datetime-local" class="form-control" name="leg2_deadline">
                 </div>
             </div>
             <button type="submit" class="btn btn-primary mt-3">{{ _('Add Match') }}</button>
@@ -172,10 +172,12 @@
                         <label class="form-label form-label-sm">{{ _('Leg 1 Deadline') }}</label>
                         <input type="datetime-local" class="form-control form-control-sm" name="leg1_deadline" value="{{ m.leg1_deadline }}">
                     </div>
+                    {% if m.round != 'final' %}
                     <div class="mb-2">
                         <label class="form-label form-label-sm">{{ _('Leg 2 Deadline') }}</label>
                         <input type="datetime-local" class="form-control form-control-sm" name="leg2_deadline" value="{{ m.leg2_deadline }}">
                     </div>
+                    {% endif %}
                     <button type="submit" class="btn btn-sm btn-outline-primary">{{ _('Update Details') }}</button>
                 </form>
             </div>
@@ -196,6 +198,7 @@
                         <input type="number" class="form-control form-control-sm" name="actual_leg1_away" min="0"
                                value="{{ m.actual_leg1_away if m.actual_leg1_away is not none else '' }}">
                     </div>
+                    {% if m.round != 'final' %}
                     <div class="mb-2">
                         <label class="form-label form-label-sm">{{ _('Leg 2: {team} goals (home)', team=m.away_team) }}</label>
                         <input type="number" class="form-control form-control-sm" name="actual_leg2_home" min="0"
@@ -206,6 +209,7 @@
                         <input type="number" class="form-control form-control-sm" name="actual_leg2_away" min="0"
                                value="{{ m.actual_leg2_away if m.actual_leg2_away is not none else '' }}">
                     </div>
+                    {% endif %}
                     <button type="submit" class="btn btn-sm btn-outline-success">{{ _('Save Results') }}</button>
                 </form>
             </div>
