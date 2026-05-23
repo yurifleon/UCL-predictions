@@ -401,20 +401,21 @@ def compute_points(prediction, match):
                 if actual_outcome == pred_outcome:
                     points["leg1"] = pts_gd if (a1h - a1a) == (p1h - p1a) else pts_result
 
-    # Check leg 2
-    a2h = match.get("actual_leg2_home")
-    a2a = match.get("actual_leg2_away")
-    if a2h is not None and a2a is not None:
-        p2h = prediction.get("leg2_home")
-        p2a = prediction.get("leg2_away")
-        if p2h is not None and p2a is not None:
-            if p2h == a2h and p2a == a2a:
-                points["leg2"] = pts_exact
-            else:
-                actual_outcome = (a2h > a2a) - (a2h < a2a)
-                pred_outcome = (p2h > p2a) - (p2h < p2a)
-                if actual_outcome == pred_outcome:
-                    points["leg2"] = pts_gd if (a2h - a2a) == (p2h - p2a) else pts_result
+    # Check leg 2 (skipped for single-leg matches like the Final)
+    if not is_single_leg(match):
+        a2h = match.get("actual_leg2_home")
+        a2a = match.get("actual_leg2_away")
+        if a2h is not None and a2a is not None:
+            p2h = prediction.get("leg2_home")
+            p2a = prediction.get("leg2_away")
+            if p2h is not None and p2a is not None:
+                if p2h == a2h and p2a == a2a:
+                    points["leg2"] = pts_exact
+                else:
+                    actual_outcome = (a2h > a2a) - (a2h < a2a)
+                    pred_outcome = (p2h > p2a) - (p2h < p2a)
+                    if actual_outcome == pred_outcome:
+                        points["leg2"] = pts_gd if (a2h - a2a) == (p2h - p2a) else pts_result
 
     points["total"] = points["leg1"] + points["leg2"]
     return points
@@ -461,6 +462,8 @@ def build_leaderboard(data):
 
 def is_leg_locked(match, leg):
     """Check if a specific leg's deadline has passed."""
+    if is_single_leg(match) and leg == 2:
+        return True
     key = f"leg{leg}_deadline"
     deadline_str = match.get(key)
     if not deadline_str:
