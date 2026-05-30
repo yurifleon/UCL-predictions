@@ -254,7 +254,7 @@ def _is_safe_next_url(target):
 
 
 def get_cached_time():
-    if "now" not in g:
+    if not hasattr(g, "now"):
         # Deadlines are stored as CDT / Lima (UTC-5); compare against CDT now.
         cdt = timezone(timedelta(hours=-5))
         g.now = datetime.now(cdt).replace(tzinfo=None)
