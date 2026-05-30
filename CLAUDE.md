@@ -16,7 +16,8 @@ python app.py
 
 # Run with Gunicorn (production-equivalent locally)
 gunicorn app:app --bind 0.0.0.0:5000
-# On Render, start command must be: gunicorn app:app --bind 0.0.0.0:$PORT
+# Note: Procfile uses `python app.py` for Render; to switch to gunicorn update Procfile to:
+#   web: gunicorn app:app --bind 0.0.0.0:$PORT
 
 # Syntax check (no test suite exists)
 python -m py_compile app.py
@@ -74,7 +75,7 @@ This is a minimal single-file Flask app (`app.py`) for a UCL Champions League Ro
 }
 ```
 
-`migrate_data(data)` runs inside `load_data()`: if `data["users"]` is a list (old format), it converts each username to a dict entry with all fields `null` and saves. It also backfills `preferred_lang: null` for any user record missing that key, and backfills `round: "r16"` for any match missing that field. If `data["matches"]` is empty, it seeds all 8 R16 matches from the `SEED_MATCHES` constant (deadlines stored in UTC). This ensures fresh deployments always have matches configured. Migrated users (no `password_hash`) are prompted to set an email/password on their next login.
+`migrate_data(data)` runs inside `load_data()`: if `data["users"]` is a list (old format), it converts each username to a dict entry with all fields `null` and saves. It also backfills `preferred_lang: null` for any user record missing that key, and backfills `round: "r16"` for any match missing that field. If `data["matches"]` is empty, it seeds all 8 R16 matches from the `SEED_MATCHES` constant (deadlines stored in CDT/Lima, UTC-5). This ensures fresh deployments always have matches configured. Migrated users (no `password_hash`) are prompted to set an email/password on their next login.
 
 **Critical type gotcha:** Match `id` is an `int` inside `matches[]`, but predictions are keyed by `str(match["id"])`. Always use `str(match_id)` when reading/writing `data["predictions"][username]`.
 
@@ -96,22 +97,24 @@ This is a minimal single-file Flask app (`app.py`) for a UCL Champions League Ro
 | `SMTP_FROM` | = SMTP_USER | From address in emails |
 
 **Caching:** Two layers, both per-request via Flask `g`:
-- `load_data_cached()` — module-level `lru_cache(maxsize=1)` wrapping `load_data()`; cleared by every `save_data()` call via `invalidate_cache()`.
+- `load_data_cached()` — module-level `lru_cache(maxsize=1)` wrapping `load_data()`; cleared by every `save_data()` call via `invalidate_cache()`. Only `before_request` uses this (for the lang lookup). All routes that read or write data call `load_data()` directly (uncached).
 - `get_cached_time()` — stores `datetime.now()` in `g.now` once per request (set in `before_request`); used by `is_leg_locked()` so the clock doesn't drift mid-request.
 - `get_match_by_id()` — builds a `{id: match}` dict in `g._match_cache` on first call per request.
 
+**Single-leg matches (`is_single_leg`):** `is_single_leg(match)` returns `True` when `match.get("round") == "final"`. The Final is a single match, not a two-legged tie. Effects: `compute_points` skips leg2 scoring entirely; `is_leg_locked` always returns `True` for leg2; dashboard, predict, and admin templates hide all leg2 inputs/rows.
+
 **Scoring (`compute_points`):** Tier depends on `match["round"]` (default `"r16"` if missing).
 
-| Outcome | R16 | QF / SF / Final |
+| Outcome | R16 | QF / SF |
 |---|---|---|
 | Exact score | 6 pts | 10 pts |
 | Correct result + goal difference | 4 pts | 7 pts |
 | Correct result only | 2 pts | 5 pts |
-| Max per tie | 12 pts | 20 pts |
+| Max per tie (2 legs) | 12 pts | 20 pts |
 
-`points["qualifier"]` is always 0 and kept only for schema compatibility.
+The Final uses the same per-leg points as QF/SF (10/7/5) but is single-leg, so max is **10 pts**. `points["qualifier"]` is always 0 and kept only for schema compatibility.
 
-Aggregate qualifier logic (used for `/bracket` display only — no longer affects scoring): team A = leg1 home team. `agg_home = actual_leg1_home + actual_leg2_away`. On aggregate tie, team A advances unless team B won leg 2 outright (`a2h >= a2a` → team A; `a2h < a2a` → team B). `get_qualifier(match)` returns the qualifying team name. `build_leaderboard(data)` returns sorted rows of `{user, total, breakdown}`.
+Aggregate qualifier logic (used for `/bracket` display only — no longer affects scoring): team A = leg1 home team. `agg_home = actual_leg1_home + actual_leg2_away`. On aggregate tie, team A advances unless team B won leg 2 outright (`a2h >= a2a` → team A; `a2h < a2a` → team B). `get_qualifier(match)` returns the qualifying team name, or `None` if any result is missing — for Final rounds it always returns `None` since leg2 is never entered. `build_leaderboard(data)` returns sorted rows of `{user, total, breakdown}`.
 
 **Templates:** Jinja2 templates in `templates/`, all extending `base.html`. Bootstrap 5.3 dark theme with a UCL blue color scheme. No JS beyond Bootstrap bundle (no custom JS). All CSS lives inline in `base.html` `<style>` block. UCL blue palette: `#1e50a0` (primary), `#4da3ff` (accent), `#0a0e27` (body bg).
 
@@ -125,7 +128,7 @@ Aggregate qualifier logic (used for `/bracket` display only — no longer affect
 
 **Flask route patterns:** Gate private pages with `session.get("username")` checks at the top. For migrated users without a password hash, gate with `user_profile_complete(user)` and redirect to `/complete-profile`. Admin routes check `session["is_admin"]`. Keep business logic in Python helpers, not templates.
 
-**Dashboard match ordering:** Matches are sorted by round: QF first (`0`), then R16 (`1`), SF (`2`), Final (`3`). This puts the currently-active knockout round at the top for users. Unknown rounds sort last (`99`).
+**Dashboard match ordering:** Matches are sorted by round: SF first (`0`), then QF (`1`), R16 (`2`), Final (`3`). This puts the most advanced active round at the top. Same ordering is used in the admin panel. Unknown rounds sort last (`99`).
 
 **Routes summary:**
 - `/` — sign-in form (home.html)
@@ -155,6 +158,9 @@ Aggregate qualifier logic (used for `/bracket` display only — no longer affect
 - Editing users/matches without related cleanup leaves orphaned prediction entries.
 - Changing `compute_points` or `get_qualifier` requires validating dashboard, leaderboard, and bracket paths.
 - Touching `migrate_data` assumptions can break migrated users (those with `password_hash: null`).
+- Valid `round` values are lowercase: `"r16"`, `"qf"`, `"sf"`, `"final"`. Wrong case silently falls through to the `99` sort bucket and wrong scoring tier.
+- `"final"` round is single-leg — `is_single_leg()` gates leg2 scoring, locking, and template rendering. The max points for Final is 10 (not 20).
+- Usernames are normalized to lowercase on registration and login (`.strip().lower()`). All lookups must use lowercase.
 
 ## Pre-Completion Checklist
 
