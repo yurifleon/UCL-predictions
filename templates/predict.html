@@ -65,7 +65,7 @@
             {% if not (leg1_locked and leg2_locked) %}
             <button type="submit" class="btn btn-primary w-100">{{ _('Save Prediction') }}</button>
             {% else %}
-            <div class="alert alert-secondary text-center">{{ _('Both legs are locked. No changes allowed.') }}</div>
+            <div class="alert alert-secondary text-center">{% if single_leg %}{{ _('Match is locked. No changes allowed.') }}{% else %}{{ _('Both legs are locked. No changes allowed.') }}{% endif %}</div>
             {% endif %}
         </form>
 

@@ -166,6 +166,9 @@ SPANISH_TRANSLATIONS = {
     "Both legs are locked. No changes allowed.": (
         "Las dos partes están cerradas. No se permiten cambios."
     ),
+    "Match is locked. No changes allowed.": (
+        "El partido está cerrado. No se permiten cambios."
+    ),
     "Back to Dashboard": "Volver al panel",
     "Leaderboard - UCL Forecast": "Clasificación - UCL Forecast",
     "Rank": "Puesto",
@@ -807,7 +810,8 @@ def predict(match_id):
 
     if request.method == "POST":
         if leg1_locked and leg2_locked:
-            flash(translate("Both legs are locked. No changes allowed."), "warning")
+            msg = "Match is locked. No changes allowed." if is_single_leg(match) else "Both legs are locked. No changes allowed."
+            flash(translate(msg), "warning")
             return redirect(url_for("dashboard"))
 
         if username not in data["predictions"]:
