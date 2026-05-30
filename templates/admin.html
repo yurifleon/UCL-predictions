@@ -112,7 +112,7 @@
             <div class="row g-2">
                 <div class="col-md-2">
                     <label class="form-label">{{ _('Round') }}</label>
-                    <select class="form-select" name="round">
+                    <select class="form-select" name="round" onchange="document.getElementById('add-match-leg2').style.display=this.value==='final'?'none':''">
                         <option value="qf">{{ _('Quarter-finals') }}</option>
                         <option value="r16">{{ _('Round of 16') }}</option>
                         <option value="sf">{{ _('Semi-finals') }}</option>
@@ -131,7 +131,7 @@
                     <label class="form-label">{{ _('Leg 1 Deadline') }}</label>
                     <input type="datetime-local" class="form-control" name="leg1_deadline" required>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3" id="add-match-leg2">
                     <label class="form-label">{{ _('Leg 2 Deadline') }}</label>
                     <input type="datetime-local" class="form-control" name="leg2_deadline">
                 </div>
