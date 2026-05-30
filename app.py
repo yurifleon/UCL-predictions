@@ -476,6 +476,10 @@ def is_leg_locked(match, leg):
     if not deadline_str:
         return False
     try:
+        # datetime-local inputs produce "YYYY-MM-DDTHH:MM" (no seconds);
+        # fromisoformat only accepts that in Python 3.11+ so normalise first.
+        if len(deadline_str) == 16:
+            deadline_str += ":00"
         deadline = datetime.fromisoformat(deadline_str)
         return get_cached_time() >= deadline
     except (ValueError, TypeError):
