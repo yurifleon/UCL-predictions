@@ -21,7 +21,7 @@ def deadline_tz_filter(iso_str):
         return ""
     try:
         dt = datetime.fromisoformat(iso_str)
-        fmt = "%b %d, %I:%M %p"
+        fmt = "%b %d %Y, %I:%M %p"
         return f"{dt.strftime(fmt)} CDT / LIM"
     except (ValueError, TypeError):
         return iso_str
