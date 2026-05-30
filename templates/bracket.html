@@ -134,6 +134,31 @@
     <div>
         <h6 class="text-center text-muted mb-2">{{ _('Quarter-finals') }}</h6>
         <div class="bracket-qf">
+            {% if qf_matches %}
+            {% for m in qf_matches %}
+            <div class="bracket-match">
+                <div class="team-row {% if m.qualifier == m.home_team %}qualifier{% endif %}">
+                    <span>{{ m.home_team }}</span>
+                    {% if m.agg_home is not none %}<span>{{ m.agg_home }}</span>{% endif %}
+                </div>
+                <div class="team-row {% if m.qualifier == m.away_team %}qualifier{% endif %}">
+                    <span>{{ m.away_team }}</span>
+                    {% if m.agg_away is not none %}<span>{{ m.agg_away }}</span>{% endif %}
+                </div>
+                <div class="scores">
+                    {{ _('Leg 1:') }} {{ m.actual_leg1_home if m.actual_leg1_home is not none else '-' }} – {{ m.actual_leg1_away if m.actual_leg1_away is not none else '-' }}
+                    &nbsp;|&nbsp;
+                    {{ _('Leg 2:') }} {{ m.actual_leg2_home if m.actual_leg2_home is not none else '-' }} – {{ m.actual_leg2_away if m.actual_leg2_away is not none else '-' }}
+                </div>
+            </div>
+            {% endfor %}
+            {% for i in range(4 - qf_matches|length) %}
+            <div class="bracket-match">
+                <div class="team-row"><span class="text-muted">{{ _('TBD') }}</span></div>
+                <div class="team-row"><span class="text-muted">{{ _('TBD') }}</span></div>
+            </div>
+            {% endfor %}
+            {% else %}
             {% for pair in range(4) %}
             {% set i = pair * 2 %}
             {% set m1 = matches[i] if matches|length > i else none %}
@@ -146,6 +171,7 @@
                 <span class="slot-team {{ 'known' if q2 }}">{{ q2 or _('TBD') }}</span>
             </div>
             {% endfor %}
+            {% endif %}
         </div>
     </div>
 
@@ -153,6 +179,31 @@
     <div>
         <h6 class="text-center text-muted mb-2">{{ _('Semi-finals') }}</h6>
         <div class="bracket-sf">
+            {% if sf_matches %}
+            {% for m in sf_matches %}
+            <div class="bracket-match">
+                <div class="team-row {% if m.qualifier == m.home_team %}qualifier{% endif %}">
+                    <span>{{ m.home_team }}</span>
+                    {% if m.agg_home is not none %}<span>{{ m.agg_home }}</span>{% endif %}
+                </div>
+                <div class="team-row {% if m.qualifier == m.away_team %}qualifier{% endif %}">
+                    <span>{{ m.away_team }}</span>
+                    {% if m.agg_away is not none %}<span>{{ m.agg_away }}</span>{% endif %}
+                </div>
+                <div class="scores">
+                    {{ _('Leg 1:') }} {{ m.actual_leg1_home if m.actual_leg1_home is not none else '-' }} – {{ m.actual_leg1_away if m.actual_leg1_away is not none else '-' }}
+                    &nbsp;|&nbsp;
+                    {{ _('Leg 2:') }} {{ m.actual_leg2_home if m.actual_leg2_home is not none else '-' }} – {{ m.actual_leg2_away if m.actual_leg2_away is not none else '-' }}
+                </div>
+            </div>
+            {% endfor %}
+            {% for i in range(2 - sf_matches|length) %}
+            <div class="bracket-match">
+                <div class="team-row"><span class="text-muted">{{ _('TBD') }}</span></div>
+                <div class="team-row"><span class="text-muted">{{ _('TBD') }}</span></div>
+            </div>
+            {% endfor %}
+            {% else %}
             {% for sf in range(2) %}
             <div class="bracket-slot">
                 <span class="slot-team text-muted">{{ _('TBD') }}</span>
@@ -160,6 +211,7 @@
                 <span class="slot-team text-muted">{{ _('TBD') }}</span>
             </div>
             {% endfor %}
+            {% endif %}
         </div>
     </div>
 

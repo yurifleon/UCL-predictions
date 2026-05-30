@@ -783,7 +783,7 @@ def dashboard():
             "fully_locked": leg1_locked and leg2_locked,
             "single_leg": is_single_leg(match),
         })
-    round_order = {"sf": 0, "qf": 1, "r16": 2, "final": 3}
+    round_order = {"final": 0, "sf": 1, "qf": 2, "r16": 3}
     matches_info.sort(key=lambda x: round_order.get(x["match"].get("round", "r16"), 99))
     leaderboard = build_leaderboard(data)
     return render_template("dashboard.html", username=username, matches_info=matches_info, leaderboard=leaderboard)
@@ -861,6 +861,8 @@ def leaderboard():
 def bracket():
     data = load_data()
     r16_matches = []
+    qf_matches = []
+    sf_matches = []
     final_match = None
     for m in data["matches"]:
         m["qualifier"] = get_qualifier(m)
@@ -888,7 +890,12 @@ def bracket():
             final_match = m
         elif round_ == "r16":
             r16_matches.append(m)
-    return render_template("bracket.html", matches=r16_matches, final_match=final_match)
+        elif round_ == "qf":
+            qf_matches.append(m)
+        elif round_ == "sf":
+            sf_matches.append(m)
+    return render_template("bracket.html", matches=r16_matches, qf_matches=qf_matches,
+                           sf_matches=sf_matches, final_match=final_match)
 
 
 @app.route("/admin", methods=["GET", "POST"])
