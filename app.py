@@ -217,6 +217,7 @@ SPANISH_TRANSLATIONS = {
     "Update Details": "Actualizar datos",
     "Enter Results": "Cargar resultados",
     "Leg 1: {team} goals": "Ida: goles de {team}",
+    "{team} goals": "Goles de {team}",
     "Leg 2: {team} goals (home)": "Vuelta: goles de {team} (local)",
     "Leg 2: {team} goals (away)": "Vuelta: goles de {team} (visitante)",
     "Save Results": "Guardar resultados",

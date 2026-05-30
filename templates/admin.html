@@ -189,12 +189,12 @@
                     <input type="hidden" name="action" value="enter_results">
                     <input type="hidden" name="match_id" value="{{ m.id }}">
                     <div class="mb-2">
-                        <label class="form-label form-label-sm">{{ _('Leg 1: {team} goals', team=m.home_team) }}</label>
+                        <label class="form-label form-label-sm">{% if m.round == 'final' %}{{ _('{team} goals', team=m.home_team) }}{% else %}{{ _('Leg 1: {team} goals', team=m.home_team) }}{% endif %}</label>
                         <input type="number" class="form-control form-control-sm" name="actual_leg1_home" min="0"
                                value="{{ m.actual_leg1_home if m.actual_leg1_home is not none else '' }}">
                     </div>
                     <div class="mb-2">
-                        <label class="form-label form-label-sm">{{ _('Leg 1: {team} goals', team=m.away_team) }}</label>
+                        <label class="form-label form-label-sm">{% if m.round == 'final' %}{{ _('{team} goals', team=m.away_team) }}{% else %}{{ _('Leg 1: {team} goals', team=m.away_team) }}{% endif %}</label>
                         <input type="number" class="form-control form-control-sm" name="actual_leg1_away" min="0"
                                value="{{ m.actual_leg1_away if m.actual_leg1_away is not none else '' }}">
                     </div>
