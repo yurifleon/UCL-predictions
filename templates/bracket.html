@@ -167,11 +167,24 @@
     <div>
         <h6 class="text-center text-muted mb-2">{{ _('Final') }}</h6>
         <div class="bracket-final">
+            {% if final_match %}
+            <div class="bracket-match" style="min-width:160px">
+                <div class="team-row {% if final_match.winner == final_match.home_team %}qualifier{% endif %}">
+                    <span>{{ final_match.home_team }}</span>
+                    {% if final_match.actual_leg1_home is not none %}<span>{{ final_match.actual_leg1_home }}</span>{% endif %}
+                </div>
+                <div class="team-row {% if final_match.winner == final_match.away_team %}qualifier{% endif %}">
+                    <span>{{ final_match.away_team }}</span>
+                    {% if final_match.actual_leg1_away is not none %}<span>{{ final_match.actual_leg1_away }}</span>{% endif %}
+                </div>
+            </div>
+            {% else %}
             <div class="bracket-slot" style="min-width:160px">
                 <span class="slot-team text-muted">{{ _('TBD') }}</span>
                 <span class="slot-sep">{{ _('vs') }}</span>
                 <span class="slot-team text-muted">{{ _('TBD') }}</span>
             </div>
+            {% endif %}
         </div>
     </div>
 
@@ -179,7 +192,7 @@
     <div>
         <h6 class="text-center text-muted mb-2">{{ _('Champion') }}</h6>
         <div class="bracket-champion text-white">
-            🏆 {{ _('TBD') }}
+            🏆 {{ final_match.winner if final_match and final_match.winner else _('TBD') }}
         </div>
     </div>
 

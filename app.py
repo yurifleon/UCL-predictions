@@ -852,8 +852,9 @@ def leaderboard():
 @app.route("/bracket")
 def bracket():
     data = load_data()
-    matches = data["matches"]
-    for m in matches:
+    r16_matches = []
+    final_match = None
+    for m in data["matches"]:
         m["qualifier"] = get_qualifier(m)
         a1h = m.get("actual_leg1_home")
         a1a = m.get("actual_leg1_away")
@@ -865,7 +866,21 @@ def bracket():
         else:
             m["agg_home"] = None
             m["agg_away"] = None
-    return render_template("bracket.html", matches=matches)
+        round_ = m.get("round", "r16")
+        if round_ == "final":
+            if a1h is not None and a1a is not None:
+                if a1h > a1a:
+                    m["winner"] = m["home_team"]
+                elif a1a > a1h:
+                    m["winner"] = m["away_team"]
+                else:
+                    m["winner"] = None
+            else:
+                m["winner"] = None
+            final_match = m
+        elif round_ == "r16":
+            r16_matches.append(m)
+    return render_template("bracket.html", matches=r16_matches, final_match=final_match)
 
 
 @app.route("/admin", methods=["GET", "POST"])
